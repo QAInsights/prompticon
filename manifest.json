@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Prompticon",
+  "version": "1.3.0",
+  "description": "Adds Yes/No/Continue and custom quick-reply buttons to the chat input on Claude, ChatGPT, Gemini, Grok, Mistral, Qwen, Meta AI and more.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://www.claude.ai/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*",
+    "https://grok.com/*",
+    "https://www.grok.com/*",
+    "https://chat.mistral.ai/*",
+    "https://chat.qwen.ai/*",
+    "https://meta.ai/*",
+    "https://www.meta.ai/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://www.claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://grok.com/*",
+        "https://www.grok.com/*",
+        "https://chat.mistral.ai/*",
+        "https://chat.qwen.ai/*",
+        "https://meta.ai/*",
+        "https://www.meta.ai/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "assets/prompticon.png",
+    "32": "assets/prompticon.png",
+    "48": "assets/prompticon.png",
+    "128": "assets/prompticon.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Prompticon",
+    "default_icon": {
+      "16": "assets/prompticon.png",
+      "32": "assets/prompticon.png",
+      "48": "assets/prompticon.png",
+      "128": "assets/prompticon.png"
+    }
+  }
+}

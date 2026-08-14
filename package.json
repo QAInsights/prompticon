@@ -1,0 +1,20 @@
+{
+  "name": "prompticon",
+  "version": "1.3.0",
+  "description": "Adds Yes/No/Continue and custom quick-reply buttons to the chat input on Claude, ChatGPT, Gemini, Grok, Mistral, Qwen, Meta AI and more.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "chatgpt",
+    "claude",
+    "gemini",
+    "grok",
+    "quick-reply",
+    "prompt-extension"
+  ],
+  "author": "QAInsights",
+  "license": "MIT"
+}
