@@ -4,7 +4,8 @@
   "description": "Adds Yes/No/Continue and custom quick-reply buttons to the chat input on Claude, ChatGPT, Gemini, Grok, Mistral, Qwen, Meta AI and more.",
   "type": "commonjs",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "pack": "powershell -Command \"Compress-Archive -Path manifest.json, content.js, content.css, popup.html, popup.js, assets -DestinationPath prompticon-v1.3.0.zip -Force\""
   },
   "keywords": [
     "chrome-extension",
