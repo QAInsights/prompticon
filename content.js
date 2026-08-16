@@ -1,23 +1,25 @@
-const DEFAULT_PROFILES = {
-  general: {
-    name: 'General',
-    quickReplies: [
-      { emoji: '👍', label: 'Yes', text: 'Yes' }, { emoji: '👎', label: 'No', text: 'No' },
-      { emoji: '➡️', label: 'Continue', text: 'Continue' }, { emoji: '📝', label: 'More detail', text: 'Can you go into more detail?' },
-      { emoji: '✂️', label: 'Shorter', text: 'Can you make that shorter?' }, { emoji: '🙏', label: 'Thanks', text: "Thanks, that's exactly what I needed." }
-    ]
-  },
-  quiz: {
-    name: 'Quiz',
-    quickReplies: [
-      { emoji: '🇦', label: 'A', text: 'A' }, { emoji: '🇧', label: 'B', text: 'B' },
-      { emoji: '🇨', label: 'C', text: 'C' }, { emoji: '🇩', label: 'D', text: 'D' },
-      { emoji: '🇪', label: 'E', text: 'E' }
-    ]
-  }
-};
+const SITE_SETTINGS = typeof module !== 'undefined' && module.exports
+  ? require('./site-settings.js')
+  : globalThis.PrompticonSiteSettings;
+const COMMAND_PALETTE = typeof module !== 'undefined' && module.exports
+  ? require('./command-palette.js')
+  : globalThis.PrompticonCommandPalette;
+const SMART_DETECTION = typeof module !== 'undefined' && module.exports
+  ? require('./smart-detection.js')
+  : globalThis.PrompticonSmartDetection;
+const PROFILE_PACKS = typeof module !== 'undefined' && module.exports
+  ? require('./profile-packs.js')
+  : globalThis.PrompticonProfilePacks;
+const LONG_PRESS = typeof module !== 'undefined' && module.exports
+  ? require('./long-press.js')
+  : globalThis.PrompticonLongPress;
+const TEMPLATE_VARIABLES = typeof module !== 'undefined' && module.exports
+  ? require('./template-variables.js')
+  : globalThis.PrompticonTemplateVariables;
+const { DEFAULT_PROFILES } = PROFILE_PACKS;
 
 const DEFAULT_REPLIES = DEFAULT_PROFILES.general.quickReplies;
+const POSITION_STORAGE_KEY = 'toolbarPositions';
 
 const PROVIDERS = [
   {
@@ -54,14 +56,30 @@ const PROVIDERS = [
     id: 'meta', name: 'Meta AI', hosts: ['meta.ai', 'www.meta.ai'],
     inputSelectors: ['input[aria-label*="Meta AI" i]', 'textarea[data-testid="prompt-input"]', 'textarea', 'div[contenteditable="true"]'],
     sendSelectors: ['button[aria-label="Send"]', 'button[data-testid="send-button"]', 'button[aria-label^="Send"]']
+  },
+  {
+    id: 'deepseek', name: 'DeepSeek', hosts: ['chat.deepseek.com'],
+    inputSelectors: ['textarea[placeholder*="Message" i]', 'textarea[placeholder*="DeepSeek" i]', 'textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[type="submit"]', 'button[aria-label*="Send" i]', 'button[title*="Send" i]', 'button[data-testid="send-button"]', 'button[class*="send" i]']
   }
 ];
 
 const GENERIC_INPUT_SELECTORS = ['div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea', 'input[type="text"]'];
+const ASSISTANT_MESSAGE_SELECTORS = [
+  '[data-message-author-role="assistant"]',
+  '[data-message-role="assistant"]',
+  '[data-author="assistant"]',
+  '[data-testid*="assistant" i]',
+  '[class*="assistant-message" i]'
+];
 
 function getProvider() {
   const host = (typeof location !== 'undefined' && location.hostname ? location.hostname : '').toLowerCase();
   return PROVIDERS.find((p) => p.hosts.includes(host)) || null;
+}
+
+function isToolbarEnabledForSite(toolbarEnabled, siteEnabled, provider = getProvider()) {
+  return SITE_SETTINGS.isToolbarEnabled(toolbarEnabled, siteEnabled, provider?.id || null);
 }
 
 function isVisible(el) {
@@ -112,6 +130,26 @@ function isModalOpenOnPage() {
     if (isVisible(d)) return true;
   }
   return false;
+}
+
+function getLatestAssistantResponseText() {
+  if (typeof document === 'undefined') return '';
+
+  for (const selector of ASSISTANT_MESSAGE_SELECTORS) {
+    const candidates = Array.from(document.querySelectorAll?.(selector) || []);
+    for (let index = candidates.length - 1; index >= 0; index -= 1) {
+      const candidate = candidates[index];
+      if (candidate.closest?.('.cqr-toolbar, .cqr-command-palette, .cqr-template-dialog') || !isVisible(candidate)) continue;
+      const text = (candidate.innerText || candidate.textContent || '').trim();
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function getSmartRepliesForPage(enabled) {
+  if (enabled !== true) return [];
+  return SMART_DETECTION.detectSmartReplies(getLatestAssistantResponseText());
 }
 
 function getComposerContainer(inputEl) {
@@ -236,6 +274,84 @@ function trySend(btn, attemptsLeft = 15) {
   }
 }
 
+function getShortcutIndex(event) {
+  if (!event || event.defaultPrevented || event.isComposing || event.repeat) return null;
+  if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return null;
+
+  const match = /^Digit([1-9])$/.exec(event.code || '');
+  return match ? Number(match[1]) - 1 : null;
+}
+
+function getShortcutReply(config, event) {
+  const index = getShortcutIndex(event);
+  return index === null ? null : config?.quickReplies?.[index] || null;
+}
+
+function insertQuickReply(reply, config) {
+  if (!reply || !config || !setInputText(reply.text)) return false;
+  if (config.autoSend) setTimeout(() => trySend(getSendButton()), 80);
+  return true;
+}
+
+function activateQuickReply(reply, config) {
+  const variables = TEMPLATE_VARIABLES.getTemplateVariables(reply?.text);
+  if (!variables.length) return insertQuickReply(reply, config);
+  return openTemplateVariableDialog(reply, config, variables);
+}
+
+function addQuickReplyInteraction(button, reply, config) {
+  const longPressReply = LONG_PRESS.getLongPressReply(reply);
+  let pressInProgress = false;
+  const clickGuard = LONG_PRESS.createClickGuard();
+  const controller = longPressReply && LONG_PRESS.createLongPressController({
+    onShortPress: () => activateQuickReply(reply, config),
+    onLongPress: () => {
+      clickGuard.suppress();
+      activateQuickReply(longPressReply, config);
+    }
+  });
+
+  if (!controller) {
+    button.addEventListener('mousedown', (event) => event.preventDefault());
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!isDragging) activateQuickReply(reply, config);
+    });
+    return;
+  }
+
+  const endPress = () => {
+    if (!pressInProgress) return;
+    pressInProgress = false;
+    button.classList.remove('cqr-long-pressing');
+    if (controller.end() !== null) clickGuard.suppress();
+  };
+
+  button.addEventListener('mousedown', (event) => {
+    if (event.button !== 0 || isDragging) return;
+    event.preventDefault();
+    pressInProgress = true;
+    clickGuard.reset();
+    button.classList.add('cqr-long-pressing');
+    controller.start();
+    const releaseTarget = typeof window !== 'undefined' ? window : button;
+    releaseTarget.addEventListener('mouseup', endPress, { once: true });
+  });
+
+  button.addEventListener('mouseleave', () => {
+    if (!pressInProgress) return;
+    pressInProgress = false;
+    button.classList.remove('cqr-long-pressing');
+    if (controller.cancel()) clickGuard.suppress();
+  });
+
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (isDragging || clickGuard.consume()) return;
+    activateQuickReply(reply, config);
+  });
+}
+
 function parseRgb(colorStr) {
   if (!colorStr || colorStr === 'transparent') return null;
   const m = colorStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
@@ -280,18 +396,344 @@ function applyNativeStyles() {
 
 let panelEl = null, currentInputEl = null, currentConfig = null, isToolbarCollapsed = false;
 let customPosition = null, isDragging = false;
+let commandPaletteEl = null, commandPaletteInputEl = null, commandPaletteResultsEl = null;
+let commandPaletteConfig = null, commandPaletteResults = [], commandPaletteActiveIndex = 0;
+let smartReplies = [];
+let templateDialogEl = null, templateFormEl = null, templateTitleEl = null;
+let templateReply = null, templateConfig = null, templateVariableNames = [];
+
+function haveSameReplies(left, right) {
+  return left.length === right.length && left.every((reply, index) => (
+    reply.label === right[index].label && reply.text === right[index].text
+  ));
+}
+
+function refreshToolbarForSmartReplies() {
+  if (!panelEl || !currentConfig || !panelEl.parentNode) return;
+  const wasVisible = panelEl.classList.contains('cqr-visible');
+  const replacement = buildToolbar({ ...currentConfig, smartReplies });
+  panelEl.parentNode.replaceChild(replacement, panelEl);
+  panelEl = replacement;
+  if (wasVisible) panelEl.classList.add('cqr-visible');
+}
+
+function updateSmartReplies() {
+  const nextReplies = getSmartRepliesForPage(currentConfig?.smartQuestionDetection);
+  if (haveSameReplies(smartReplies, nextReplies)) return;
+  smartReplies = nextReplies;
+  refreshToolbarForSmartReplies();
+}
+
+function closeCommandPalette() {
+  if (commandPaletteEl?.open) commandPaletteEl.close();
+}
+
+function selectCommandPaletteReply(reply) {
+  const config = commandPaletteConfig;
+  closeCommandPalette();
+  if (reply && config) activateQuickReply(reply, config);
+}
+
+function closeTemplateVariableDialog() {
+  if (templateDialogEl?.open) templateDialogEl.close();
+}
+
+function createTemplateVariableDialog() {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'cqr-template-dialog';
+  dialog.setAttribute('aria-labelledby', 'cqr-template-title');
+  dialog.setAttribute('closedby', 'any');
+  if (!supportsDialogLightDismiss()) {
+    dialog.addEventListener('click', (event) => {
+      if (isBackdropClick(event, dialog)) closeTemplateVariableDialog();
+    });
+  }
+
+  const header = document.createElement('header');
+  header.className = 'cqr-template-header';
+  const title = document.createElement('h2');
+  title.id = 'cqr-template-title';
+  header.appendChild(title);
+
+  const copy = document.createElement('p');
+  copy.className = 'cqr-template-copy';
+  copy.textContent = 'Fill in the values for this reply.';
+
+  const form = document.createElement('form');
+  form.className = 'cqr-template-form';
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const values = Object.fromEntries(templateVariableNames.map((name) => [name, form.elements[name].value]));
+    const resolvedReply = { ...templateReply, text: TEMPLATE_VARIABLES.renderTemplate(templateReply.text, values) };
+    const config = templateConfig;
+    closeTemplateVariableDialog();
+    if (config) insertQuickReply(resolvedReply, config);
+  });
+
+  dialog.addEventListener('close', () => {
+    templateReply = null;
+    templateConfig = null;
+    templateVariableNames = [];
+  });
+  dialog.append(header, copy, form);
+  document.body.appendChild(dialog);
+  templateDialogEl = dialog;
+  templateTitleEl = title;
+  templateFormEl = form;
+}
+
+function openTemplateVariableDialog(reply, config, variables) {
+  if (!reply || !config || !variables.length || isModalOpenOnPage()) return false;
+  if (!templateDialogEl) createTemplateVariableDialog();
+  if (!templateDialogEl || !templateFormEl || !templateTitleEl) return false;
+
+  templateReply = reply;
+  templateConfig = config;
+  templateVariableNames = variables;
+  templateTitleEl.textContent = reply.label ? `Complete ${reply.label}` : 'Complete template';
+  templateFormEl.replaceChildren();
+
+  variables.forEach((name, index) => {
+    const field = document.createElement('div');
+    field.className = 'cqr-template-field';
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    const inputId = `cqr-template-${name}`;
+    label.htmlFor = inputId;
+    label.textContent = name;
+    input.id = inputId;
+    input.name = name;
+    input.type = 'text';
+    input.required = true;
+    input.autocomplete = 'off';
+    input.enterKeyHint = index === variables.length - 1 ? 'done' : 'next';
+    field.append(label, input);
+    templateFormEl.appendChild(field);
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'cqr-template-actions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'cqr-template-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.addEventListener('click', closeTemplateVariableDialog);
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'cqr-template-submit';
+  submit.textContent = config.autoSend ? 'Send message' : 'Fill chat input';
+  actions.append(cancel, submit);
+  templateFormEl.appendChild(actions);
+
+  if (!templateDialogEl.open) templateDialogEl.showModal();
+  templateFormEl.elements[variables[0]].focus({ preventScroll: true });
+  return true;
+}
+
+function supportsDialogLightDismiss() {
+  return typeof HTMLDialogElement !== 'undefined' && 'closedBy' in HTMLDialogElement.prototype;
+}
+
+function isBackdropClick(event, dialog) {
+  if (!event || event.target !== dialog) return false;
+  const rect = dialog.getBoundingClientRect();
+  return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+}
+
+function renderCommandPaletteResults() {
+  if (!commandPaletteResultsEl || !commandPaletteInputEl) return;
+
+  commandPaletteResults = COMMAND_PALETTE.filterQuickReplies(
+    commandPaletteConfig?.quickReplies,
+    commandPaletteInputEl.value
+  );
+  commandPaletteActiveIndex = commandPaletteResults.length
+    ? Math.min(Math.max(commandPaletteActiveIndex, 0), commandPaletteResults.length - 1)
+    : -1;
+  commandPaletteResultsEl.replaceChildren();
+
+  if (!commandPaletteResults.length) {
+    const emptyState = document.createElement('p');
+    emptyState.className = 'cqr-command-empty';
+    emptyState.textContent = 'No matching replies.';
+    commandPaletteResultsEl.appendChild(emptyState);
+    return;
+  }
+
+  commandPaletteResults.forEach((reply, index) => {
+    const result = document.createElement('button');
+    result.type = 'button';
+    result.className = 'cqr-command-result' + (index === commandPaletteActiveIndex ? ' cqr-command-result-active' : '');
+    result.textContent = `${reply.emoji || '💬'} ${reply.label || reply.text}`;
+    result.title = reply.text || reply.label || '';
+    result.addEventListener('click', () => selectCommandPaletteReply(reply));
+    commandPaletteResultsEl.appendChild(result);
+  });
+}
+
+function createCommandPalette() {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'cqr-command-palette';
+  dialog.setAttribute('aria-labelledby', 'cqr-command-title');
+  dialog.setAttribute('closedby', 'any');
+  if (!supportsDialogLightDismiss()) {
+    dialog.addEventListener('click', (event) => {
+      if (isBackdropClick(event, dialog)) closeCommandPalette();
+    });
+  }
+
+  const header = document.createElement('header');
+  header.className = 'cqr-command-header';
+  const title = document.createElement('h2');
+  title.id = 'cqr-command-title';
+  title.textContent = 'Search replies';
+  const shortcut = document.createElement('span');
+  shortcut.className = 'cqr-command-shortcut';
+  shortcut.textContent = 'Alt+P';
+  header.append(title, shortcut);
+
+  const label = document.createElement('label');
+  label.className = 'cqr-command-label';
+  label.htmlFor = 'cqr-command-search';
+  label.textContent = 'Search saved quick replies';
+  const input = document.createElement('input');
+  input.id = label.htmlFor;
+  input.className = 'cqr-command-input';
+  input.type = 'search';
+  input.placeholder = 'Search replies';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  const results = document.createElement('div');
+  results.className = 'cqr-command-results';
+
+  input.addEventListener('input', () => {
+    commandPaletteActiveIndex = 0;
+    renderCommandPaletteResults();
+  });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      commandPaletteActiveIndex = COMMAND_PALETTE.getNextActiveIndex(
+        commandPaletteActiveIndex,
+        commandPaletteResults.length,
+        event.key === 'ArrowDown' ? 1 : -1
+      );
+      renderCommandPaletteResults();
+    } else if (event.key === 'Enter' && commandPaletteResults[commandPaletteActiveIndex]) {
+      event.preventDefault();
+      selectCommandPaletteReply(commandPaletteResults[commandPaletteActiveIndex]);
+    }
+  });
+  dialog.addEventListener('close', () => {
+    commandPaletteConfig = null;
+    commandPaletteResults = [];
+    commandPaletteActiveIndex = 0;
+  });
+  dialog.append(header, label, input, results);
+  document.body.appendChild(dialog);
+  commandPaletteEl = dialog;
+  commandPaletteInputEl = input;
+  commandPaletteResultsEl = results;
+}
+
+function openCommandPalette(config = currentConfig) {
+  if (!config?.quickReplies?.length || isModalOpenOnPage()) return;
+  if (!commandPaletteEl) createCommandPalette();
+  if (!commandPaletteEl || !commandPaletteInputEl) return;
+
+  commandPaletteConfig = config;
+  commandPaletteActiveIndex = 0;
+  commandPaletteInputEl.value = '';
+  renderCommandPaletteResults();
+  if (!commandPaletteEl.open) commandPaletteEl.showModal();
+  commandPaletteInputEl.focus({ preventScroll: true });
+}
 
 function loadConfig() {
   return new Promise((res) => {
     chrome.storage.sync.get(
-      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false },
+      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false },
       (cfg) => {
         const active = cfg.activeProfile || 'general';
         const profs = cfg.profiles || DEFAULT_PROFILES;
         const currentReplies = profs[active]?.quickReplies || cfg.quickReplies || DEFAULT_PROFILES.general.quickReplies;
-        res({ quickReplies: currentReplies, autoSend: cfg.autoSend });
+        res({
+          quickReplies: currentReplies,
+          autoSend: cfg.autoSend,
+          smartQuestionDetection: cfg.smartQuestionDetection === true,
+          toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled)
+        });
       }
     );
+  });
+}
+
+function getSitePositionKey() {
+  const provider = getProvider();
+  if (provider) return provider.id;
+  const host = (typeof location !== 'undefined' && location.hostname ? location.hostname : '').toLowerCase();
+  return host || null;
+}
+
+function normalizePosition(position) {
+  if (!position || !Number.isFinite(position.left) || !Number.isFinite(position.top)) return null;
+  return { left: position.left, top: position.top };
+}
+
+function getStoredSitePosition(positions, siteKey = getSitePositionKey()) {
+  if (!siteKey || !positions || typeof positions !== 'object') return null;
+  return normalizePosition(positions[siteKey]);
+}
+
+function getPositionStorageArea() {
+  return typeof chrome !== 'undefined' ? chrome.storage?.local || null : null;
+}
+
+function readToolbarPositions() {
+  const storage = getPositionStorageArea();
+  if (!storage) return Promise.resolve({});
+
+  return new Promise((resolve) => {
+    storage.get({ [POSITION_STORAGE_KEY]: {} }, (result) => {
+      const positions = result?.[POSITION_STORAGE_KEY];
+      resolve(positions && typeof positions === 'object' ? positions : {});
+    });
+  });
+}
+
+async function loadToolbarPosition() {
+  const positions = await readToolbarPositions();
+  return getStoredSitePosition(positions);
+}
+
+async function saveToolbarPosition(position) {
+  const storage = getPositionStorageArea();
+  const siteKey = getSitePositionKey();
+  const normalized = normalizePosition(position);
+  if (!storage || !siteKey || !normalized) return false;
+
+  const positions = await readToolbarPositions();
+  return new Promise((resolve) => {
+    storage.set(
+      { [POSITION_STORAGE_KEY]: { ...positions, [siteKey]: normalized } },
+      () => resolve(true)
+    );
+  });
+}
+
+async function clearToolbarPosition() {
+  const storage = getPositionStorageArea();
+  const siteKey = getSitePositionKey();
+  if (!storage || !siteKey) return false;
+
+  const positions = await readToolbarPositions();
+  if (!(siteKey in positions)) return true;
+
+  const nextPositions = { ...positions };
+  delete nextPositions[siteKey];
+  return new Promise((resolve) => {
+    storage.set({ [POSITION_STORAGE_KEY]: nextPositions }, () => resolve(true));
   });
 }
 
@@ -335,6 +777,7 @@ function setupDraggable(el) {
       }
       if (hasMoved) {
         el.classList.remove('cqr-dragging');
+        void saveToolbarPosition(customPosition);
         setTimeout(() => { isDragging = false; }, 60);
       }
     };
@@ -350,6 +793,7 @@ function setupDraggable(el) {
 function resetPosition() {
   customPosition = null;
   positionPanel();
+  return clearToolbarPosition();
 }
 
 function buildToolbar(config) {
@@ -362,20 +806,52 @@ function buildToolbar(config) {
   handle.title = 'Drag to move toolbar';
   bar.appendChild(handle);
 
-  config.quickReplies.forEach((r) => {
+  config.quickReplies.forEach((r, index) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'cqr-btn cqr-reply-btn';
     btn.textContent = `${r.emoji} ${r.label}`;
-    btn.title = r.text;
-    btn.addEventListener('mousedown', (e) => e.preventDefault());
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (isDragging) return;
-      if (setInputText(r.text) && config.autoSend) setTimeout(() => trySend(getSendButton()), 80);
-    });
+    const shortcut = index < 9 ? `Alt+${index + 1}` : null;
+    const longPressReply = LONG_PRESS.getLongPressReply(r);
+    const shortTitle = shortcut ? `${r.text} (${shortcut})` : r.text;
+    btn.title = longPressReply ? `${shortTitle} — hold for: ${longPressReply.text}` : shortTitle;
+    if (shortcut) btn.setAttribute('aria-keyshortcuts', shortcut);
+    addQuickReplyInteraction(btn, r, config);
     bar.appendChild(btn);
   });
+
+  if (config.smartReplies?.length) {
+    const smartGroup = document.createElement('span');
+    smartGroup.className = 'cqr-smart-replies';
+    config.smartReplies.forEach((reply) => {
+      const smartBtn = document.createElement('button');
+      smartBtn.type = 'button';
+      smartBtn.className = 'cqr-btn cqr-reply-btn cqr-smart-reply-btn';
+      smartBtn.textContent = `${reply.emoji} ${reply.label}`;
+      const longPressReply = LONG_PRESS.getLongPressReply(reply);
+      smartBtn.title = longPressReply
+        ? `Suggested from the latest assistant response — hold for: ${longPressReply.text}`
+        : 'Suggested from the latest assistant response';
+      smartBtn.setAttribute('aria-label', `Suggested answer: ${reply.label}`);
+      addQuickReplyInteraction(smartBtn, reply, config);
+      smartGroup.appendChild(smartBtn);
+    });
+    bar.appendChild(smartGroup);
+  }
+
+  const commandBtn = document.createElement('button');
+  commandBtn.type = 'button';
+  commandBtn.className = 'cqr-btn cqr-command-btn';
+  commandBtn.textContent = '⌕';
+  commandBtn.title = 'Search quick replies (Alt+P)';
+  commandBtn.setAttribute('aria-label', 'Search quick replies');
+  commandBtn.setAttribute('aria-keyshortcuts', 'Alt+P');
+  commandBtn.addEventListener('mousedown', (e) => e.preventDefault());
+  commandBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!isDragging) openCommandPalette(config);
+  });
+  bar.appendChild(commandBtn);
 
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
@@ -416,6 +892,12 @@ function buildToolbar(config) {
 
 function hidePanel() { if (panelEl) panelEl.classList.remove('cqr-visible'); }
 
+function getPanelLeft(composerRect, inputRect, panelWidth, collapsed) {
+  return collapsed && inputRect
+    ? inputRect.left
+    : composerRect.left + (composerRect.width - panelWidth) / 2;
+}
+
 function positionPanel() {
   if (!panelEl || !currentInputEl || isDragging) return;
   const pw = panelEl.offsetWidth, ph = panelEl.offsetHeight;
@@ -437,7 +919,10 @@ function positionPanel() {
   panelEl.style.width = 'max-content';
 
   let top = r.top - (ph || 30) - 10;
-  const left = isToolbarCollapsed ? r.left + 4 : r.left + (r.width - pw) / 2;
+  // Grok's styled composer wrapper can be much wider than the editable field.
+  // A collapsed toolbar should track the field itself on every provider.
+  const inputRect = currentInputEl.getBoundingClientRect();
+  const left = getPanelLeft(r, inputRect, pw, isToolbarCollapsed);
 
   panelEl.style.top = Math.round(top < 8 ? r.bottom + 10 : top) + 'px';
   panelEl.style.left = Math.round(Math.max(12, Math.min(left, window.innerWidth - pw - 12))) + 'px';
@@ -447,6 +932,7 @@ function syncPanel() {
   if (isModalOpenOnPage()) { hidePanel(); return; }
   currentInputEl = getInputEl();
   if (!currentInputEl || !panelEl) { hidePanel(); return; }
+  updateSmartReplies();
   applyNativeStyles();
   positionPanel();
   panelEl.classList.add('cqr-visible');
@@ -455,9 +941,11 @@ function syncPanel() {
 async function initPanel() {
   if (panelEl) return;
   currentConfig = await loadConfig();
-  if (!currentConfig || !currentConfig.quickReplies || currentConfig.quickReplies.length === 0) return;
+  if (!currentConfig || !currentConfig.toolbarEnabled || !currentConfig.quickReplies || currentConfig.quickReplies.length === 0) return;
+  customPosition = await loadToolbarPosition();
   if (panelEl) return;
-  panelEl = buildToolbar(currentConfig);
+  smartReplies = getSmartRepliesForPage(currentConfig.smartQuestionDetection);
+  panelEl = buildToolbar({ ...currentConfig, smartReplies });
   if (document.body) {
     document.body.appendChild(panelEl);
   } else if (typeof document !== 'undefined') {
@@ -474,6 +962,19 @@ async function initPanel() {
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof chrome !== 'undefined' && chrome.storage) {
   window.addEventListener('scroll', () => { if (panelEl?.classList.contains('cqr-visible')) positionPanel(); }, true);
   window.addEventListener('resize', () => { if (panelEl) positionPanel(); });
+  document.addEventListener('keydown', (event) => {
+    if (commandPaletteEl?.open) return;
+    if (COMMAND_PALETTE.isCommandPaletteShortcut(event)) {
+      if (isModalOpenOnPage()) return;
+      event.preventDefault();
+      openCommandPalette(currentConfig);
+      return;
+    }
+    const reply = getShortcutReply(currentConfig, event);
+    if (!reply || isModalOpenOnPage()) return;
+    event.preventDefault();
+    activateQuickReply(reply, currentConfig);
+  }, true);
 
   let debounceTimer = null;
   if (typeof MutationObserver !== 'undefined') {
@@ -481,9 +982,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
   }
   setInterval(syncPanel, 2000);
   if (chrome.storage?.onChanged) {
-    chrome.storage.onChanged.addListener((changes) => {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'local') {
+        if (changes?.[POSITION_STORAGE_KEY]) {
+          customPosition = getStoredSitePosition(changes[POSITION_STORAGE_KEY].newValue);
+          positionPanel();
+        }
+        return;
+      }
       if (changes?.resetPosition) {
-        resetPosition();
+        void resetPosition();
         return;
       }
       if (panelEl) { panelEl.remove(); panelEl = null; }
@@ -497,19 +1005,38 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     DEFAULT_PROFILES,
+    addQuickReplyInteraction,
     DEFAULT_REPLIES,
     PROVIDERS,
     getProvider,
+    isToolbarEnabledForSite,
+    getLatestAssistantResponseText,
+    getSmartRepliesForPage,
+    openCommandPalette,
+    getInputEl,
+    getSendButton,
+    setInputText,
+    activateQuickReply,
     scoreInput,
     parseRgb,
     getLuminance,
     isTransparentColor,
     isModalOpenOnPage,
     getComposerContainer,
+    getShortcutIndex,
+    getShortcutReply,
+    isBackdropClick,
+    insertQuickReply,
     loadConfig,
+    getSitePositionKey,
+    getStoredSitePosition,
+    loadToolbarPosition,
+    saveToolbarPosition,
+    clearToolbarPosition,
     buildToolbar,
     setupDraggable,
     resetPosition,
+    getPanelLeft,
     initPanel
   };
 }

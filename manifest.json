@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Prompticon",
   "version": "1.3.0",
-  "description": "Quick-reply toolbar for ChatGPT, Claude, Gemini, Grok, Mistral, Qwen & Meta AI with customizable buttons and one-click prompts.",
+  "description": "Customizable quick-reply toolbar for ChatGPT, Claude, Gemini, Grok, Mistral, Qwen, Meta AI, and DeepSeek.",
   "permissions": ["storage"],
   "host_permissions": [
     "https://claude.ai/*",
@@ -15,7 +15,8 @@
     "https://chat.mistral.ai/*",
     "https://chat.qwen.ai/*",
     "https://meta.ai/*",
-    "https://www.meta.ai/*"
+    "https://www.meta.ai/*",
+    "https://chat.deepseek.com/*"
   ],
   "content_scripts": [
     {
@@ -30,9 +31,10 @@
         "https://chat.mistral.ai/*",
         "https://chat.qwen.ai/*",
         "https://meta.ai/*",
-        "https://www.meta.ai/*"
+        "https://www.meta.ai/*",
+        "https://chat.deepseek.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["site-settings.js", "command-palette.js", "smart-detection.js", "profile-packs.js", "long-press.js", "template-variables.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     }

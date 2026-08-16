@@ -1,33 +1,30 @@
-const DEFAULT_PROFILES = {
-  general: {
-    name: 'General',
-    quickReplies: [
-      { emoji: '👍', label: 'Yes', text: 'Yes' },
-      { emoji: '👎', label: 'No', text: 'No' },
-      { emoji: '➡️', label: 'Continue', text: 'Continue' },
-      { emoji: '📝', label: 'More detail', text: 'Can you go into more detail?' },
-      { emoji: '✂️', label: 'Shorter', text: 'Can you make that shorter?' },
-      { emoji: '🙏', label: 'Thanks', text: "Thanks, that's exactly what I needed." }
-    ]
-  },
-  quiz: {
-    name: 'Quiz',
-    quickReplies: [
-      { emoji: '🇦', label: 'A', text: 'A' },
-      { emoji: '🇧', label: 'B', text: 'B' },
-      { emoji: '🇨', label: 'C', text: 'C' },
-      { emoji: '🇩', label: 'D', text: 'D' },
-      { emoji: '🇪', label: 'E', text: 'E' }
-    ]
-  }
-};
+const { SUPPORTED_SITES, normalizeSiteEnabled } = globalThis.PrompticonSiteSettings;
+const { ONBOARDING_STEP_COUNT, getOnboardingStepState, shouldShowOnboarding } = globalThis.PrompticonOnboarding;
+const { DEFAULT_PROFILES, PROFILE_ORDER } = globalThis.PrompticonProfilePacks;
 
 const listEl = document.getElementById('list');
 const addBtn = document.getElementById('add');
-const saveBtn = document.getElementById('save');
 const autoSendEl = document.getElementById('autoSend');
-const profileTabs = document.querySelectorAll('.profile-tab');
+const smartQuestionDetectionEl = document.getElementById('smartQuestionDetection');
+const toolbarEnabledEl = document.getElementById('toolbarEnabled');
+const siteSettingsEl = document.getElementById('siteSettings');
+const siteListEl = document.getElementById('siteList');
+const preferencesDialogEl = document.getElementById('preferencesDialog');
+const settingsButtonEl = document.getElementById('settingsButton');
+const closePreferencesButtonEl = document.getElementById('closePreferences');
+const onboardingEl = document.getElementById('onboarding');
+const onboardingProgressTextEl = document.getElementById('onboardingProgressText');
+const onboardingStepMarkers = document.querySelectorAll('[data-onboarding-marker]');
+const onboardingBackBtn = document.getElementById('onboardingBack');
+const onboardingNextBtn = document.getElementById('onboardingNext');
+const onboardingFinishBtn = document.getElementById('onboardingFinish');
+const onboardingSkipBtn = document.getElementById('onboardingSkip');
+const demoComposerEl = document.getElementById('demoComposer');
+const demoSendModeEl = document.getElementById('demoSendMode');
+const demoSendResultEl = document.getElementById('demoSendResult');
+const profileSelectEl = document.getElementById('profileSelect');
 const versionBadge = document.getElementById('versionBadge');
+const saveToastEl = document.getElementById('saveToast');
 
 if (versionBadge && typeof chrome !== 'undefined' && chrome.runtime?.getManifest) {
   versionBadge.textContent = `v${chrome.runtime.getManifest().version}`;
@@ -35,6 +32,125 @@ if (versionBadge && typeof chrome !== 'undefined' && chrome.runtime?.getManifest
 
 let activeProfile = 'general';
 let profiles = JSON.parse(JSON.stringify(DEFAULT_PROFILES));
+let onboardingStep = 0;
+let replySaveTimer;
+let saveToastTimer;
+
+function setOnboardingStep(step, shouldFocus = false) {
+  const state = getOnboardingStepState(step);
+  onboardingStep = state.index;
+
+  document.querySelectorAll('[data-onboarding-step]').forEach((slide) => {
+    slide.hidden = Number(slide.dataset.onboardingStep) !== state.index;
+  });
+  onboardingProgressTextEl.textContent = `${state.number} of ${ONBOARDING_STEP_COUNT}`;
+  onboardingStepMarkers.forEach((marker) => {
+    marker.classList.toggle('active', Number(marker.dataset.onboardingMarker) === state.index);
+  });
+  onboardingBackBtn.hidden = state.isFirst;
+  onboardingNextBtn.hidden = state.isLast;
+  onboardingFinishBtn.hidden = !state.isLast;
+
+  if (shouldFocus) {
+    onboardingEl.querySelector(`[data-onboarding-step="${state.index}"] h2`)?.focus({ preventScroll: true });
+  }
+}
+
+function showOnboarding(show) {
+  if (!show) {
+    if (onboardingEl.open) onboardingEl.close();
+    return;
+  }
+
+  setOnboardingStep(0, true);
+  if (!onboardingEl.open) onboardingEl.showModal();
+}
+
+function updateDemoSendResult() {
+  demoSendResultEl.textContent = demoSendModeEl.checked
+    ? 'Send now: a reply is inserted and submitted immediately.'
+    : 'Fill only: a reply is inserted so you can review it first.';
+}
+
+function completeOnboarding() {
+  chrome.storage.sync.set({ onboardingCompleted: true }, () => showOnboarding(false));
+}
+
+function renderSiteControls(siteEnabled = {}) {
+  siteListEl.querySelectorAll('.site-option').forEach((option) => option.remove());
+  const normalizedSiteEnabled = normalizeSiteEnabled(siteEnabled);
+
+  SUPPORTED_SITES.forEach((site) => {
+    const option = document.createElement('div');
+    option.className = 'site-option';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `site-${site.id}`;
+    checkbox.dataset.site = site.id;
+    checkbox.checked = normalizedSiteEnabled[site.id];
+
+    const label = document.createElement('label');
+    label.htmlFor = checkbox.id;
+    label.textContent = site.name;
+
+    option.appendChild(checkbox);
+    option.appendChild(label);
+    siteListEl.appendChild(option);
+  });
+}
+
+function getSiteEnabledConfig() {
+  return Object.fromEntries(
+    Array.from(siteListEl.querySelectorAll('input[data-site]'), (checkbox) => [checkbox.dataset.site, checkbox.checked])
+  );
+}
+
+function updateSiteControlsState() {
+  const disabled = !toolbarEnabledEl.checked;
+  siteListEl.disabled = disabled;
+  siteSettingsEl.classList.toggle('site-settings-disabled', disabled);
+}
+
+function savePreferenceSettings() {
+  chrome.storage.sync.set({
+    autoSend: autoSendEl.checked,
+    smartQuestionDetection: smartQuestionDetectionEl.checked,
+    toolbarEnabled: toolbarEnabledEl.checked,
+    siteEnabled: getSiteEnabledConfig()
+  }, showSaveFeedback);
+}
+
+function showSaveFeedback() {
+  clearTimeout(saveToastTimer);
+
+  if (typeof saveToastEl.showPopover === 'function') {
+    if (!saveToastEl.matches(':popover-open')) saveToastEl.showPopover();
+  } else {
+    saveToastEl.classList.add('is-visible');
+  }
+
+  saveToastTimer = setTimeout(() => {
+    if (typeof saveToastEl.hidePopover === 'function') {
+      saveToastEl.hidePopover();
+    } else {
+      saveToastEl.classList.remove('is-visible');
+    }
+  }, 1400);
+}
+
+function saveQuickReplies() {
+  chrome.storage.sync.set({
+    activeProfile,
+    profiles,
+    quickReplies: profiles[activeProfile].quickReplies
+  }, showSaveFeedback);
+}
+
+function queueQuickReplySave() {
+  clearTimeout(replySaveTimer);
+  replySaveTimer = setTimeout(saveQuickReplies, 250);
+}
 
 function render() {
   listEl.innerHTML = '';
@@ -44,27 +160,36 @@ function render() {
     const row = document.createElement('div');
     row.className = 'row';
     row.innerHTML = `
-      <input class="emoji-input" type="text" data-i="${i}" data-field="emoji" value="${r.emoji}" placeholder="Emoji" />
-      <input class="label-input" type="text" data-i="${i}" data-field="label" value="${r.label}" placeholder="Label" />
-      <input class="text-input" type="text" data-i="${i}" data-field="text" value="${r.text}" placeholder="Prompt text" />
-      <button class="remove" data-i="${i}" title="Remove">&times;</button>
+      <input class="emoji-input" type="text" data-i="${i}" data-field="emoji" value="${r.emoji}" placeholder="Emoji" aria-label="Reply emoji" />
+      <input class="label-input" type="text" data-i="${i}" data-field="label" value="${r.label}" placeholder="Label" aria-label="Reply label" />
+      <input class="text-input" type="text" data-i="${i}" data-field="text" value="${r.text}" placeholder="Prompt text or {{variable}}" aria-label="Reply text" />
+      <button class="remove" data-i="${i}" type="button" aria-label="Remove quick reply" title="Remove quick reply">&times;</button>
     `;
     listEl.appendChild(row);
   });
 }
 
-function updateActiveTabUI() {
-  profileTabs.forEach((tab) => {
-    tab.classList.toggle('active', tab.dataset.profile === activeProfile);
+function renderProfileOptions() {
+  const profileIds = [...PROFILE_ORDER, ...Object.keys(profiles).filter((id) => !PROFILE_ORDER.includes(id))];
+  profileSelectEl.replaceChildren();
+  profileIds.forEach((id) => {
+    const profile = profiles[id];
+    if (!profile) return;
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = `${profile.icon || '💬'} ${profile.name || id}`;
+    profileSelectEl.appendChild(option);
   });
 }
 
-profileTabs.forEach((tab) => {
-  tab.addEventListener('click', () => {
-    activeProfile = tab.dataset.profile;
-    updateActiveTabUI();
-    render();
-  });
+function updateActiveProfileUI() {
+  profileSelectEl.value = activeProfile;
+}
+
+profileSelectEl.addEventListener('change', () => {
+  activeProfile = profileSelectEl.value;
+  render();
+  saveQuickReplies();
 });
 
 listEl.addEventListener('input', (e) => {
@@ -72,12 +197,14 @@ listEl.addEventListener('input', (e) => {
   const field = e.target.dataset.field;
   if (i === undefined) return;
   profiles[activeProfile].quickReplies[i][field] = e.target.value;
+  queueQuickReplySave();
 });
 
 listEl.addEventListener('click', (e) => {
   if (e.target.classList.contains('remove')) {
     profiles[activeProfile].quickReplies.splice(e.target.dataset.i, 1);
     render();
+    saveQuickReplies();
   }
 });
 
@@ -85,21 +212,33 @@ addBtn.addEventListener('click', () => {
   if (!profiles[activeProfile]) return;
   profiles[activeProfile].quickReplies.push({ emoji: '💬', label: 'New', text: 'New prompt template' });
   render();
+  saveQuickReplies();
 });
 
-saveBtn.addEventListener('click', () => {
-  chrome.storage.sync.set(
-    {
-      activeProfile: activeProfile,
-      profiles: profiles,
-      quickReplies: profiles[activeProfile].quickReplies,
-      autoSend: autoSendEl.checked
-    },
-    () => {
-      saveBtn.textContent = 'Saved Successfully! ✨';
-      setTimeout(() => (saveBtn.textContent = 'Save Changes'), 1200);
-    }
-  );
+settingsButtonEl.addEventListener('click', () => preferencesDialogEl.showModal());
+closePreferencesButtonEl.addEventListener('click', () => preferencesDialogEl.close());
+toolbarEnabledEl.addEventListener('change', () => {
+  updateSiteControlsState();
+  savePreferenceSettings();
+});
+autoSendEl.addEventListener('change', savePreferenceSettings);
+smartQuestionDetectionEl.addEventListener('change', savePreferenceSettings);
+siteListEl.addEventListener('change', savePreferenceSettings);
+
+document.querySelectorAll('[data-demo-reply]').forEach((button) => {
+  button.addEventListener('click', () => {
+    demoComposerEl.textContent = button.dataset.demoReply;
+  });
+});
+
+demoSendModeEl.addEventListener('change', updateDemoSendResult);
+onboardingBackBtn.addEventListener('click', () => setOnboardingStep(onboardingStep - 1, true));
+onboardingNextBtn.addEventListener('click', () => setOnboardingStep(onboardingStep + 1, true));
+onboardingFinishBtn.addEventListener('click', completeOnboarding);
+onboardingSkipBtn.addEventListener('click', completeOnboarding);
+onboardingEl.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  completeOnboarding();
 });
 
 const resetPosBtn = document.getElementById('resetPos');
@@ -125,11 +264,19 @@ chrome.storage.sync.get(
     activeProfile: 'general',
     profiles: DEFAULT_PROFILES,
     quickReplies: null,
-    autoSend: false
+    autoSend: false,
+    smartQuestionDetection: false,
+    toolbarEnabled: true,
+    siteEnabled: {},
+    onboardingCompleted: false
   },
   (cfg) => {
     activeProfile = cfg.activeProfile || 'general';
-    profiles = cfg.profiles || JSON.parse(JSON.stringify(DEFAULT_PROFILES));
+    profiles = cfg.profiles ? Object.assign({}, cfg.profiles) : JSON.parse(JSON.stringify(DEFAULT_PROFILES));
+    for (const key of Object.keys(DEFAULT_PROFILES)) {
+      if (!profiles[key]) profiles[key] = JSON.parse(JSON.stringify(DEFAULT_PROFILES[key]));
+    }
+    if (!profiles[activeProfile]) activeProfile = 'general';
 
     // Handle migration if quickReplies was customized before profiles existed
     if (cfg.quickReplies && (!cfg.profiles || !cfg.profiles.general)) {
@@ -137,7 +284,14 @@ chrome.storage.sync.get(
     }
 
     autoSendEl.checked = cfg.autoSend;
-    updateActiveTabUI();
+    smartQuestionDetectionEl.checked = cfg.smartQuestionDetection === true;
+    toolbarEnabledEl.checked = cfg.toolbarEnabled;
+    renderSiteControls(cfg.siteEnabled);
+    updateSiteControlsState();
+    renderProfileOptions();
+    updateActiveProfileUI();
     render();
+    updateDemoSendResult();
+    showOnboarding(shouldShowOnboarding(cfg.onboardingCompleted));
   }
 );

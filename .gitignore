@@ -1,0 +1,19 @@
+# Dependencies and test output
+node_modules/
+coverage/
+.nyc_output/
+
+# Packaged Chrome Web Store artifacts
+prompticon-*.zip
+
+# Local agent and editor configuration
+.qwen/
+.impeccable.md
+CLAUDE.md
+
+# Local planning notes
+PRODUCT_GROWTH_PLAN.md
+
+# Operating-system files
+.DS_Store
+Thumbs.db

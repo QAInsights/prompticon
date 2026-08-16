@@ -27,14 +27,28 @@
     box-sizing: border-box;
   }
 
+  html,
+  body {
+    overflow: clip;
+    scrollbar-width: none;
+  }
+
+  @supports not (scrollbar-width: none) {
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none;
+      height: 0;
+      width: 0;
+    }
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     width: 420px;
     margin: 0;
-    padding: 12px 14px;
+    padding: 14px 16px 16px;
     background: var(--bg-color);
     color: var(--text-primary);
-    overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -44,6 +58,71 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 2px;
+  }
+
+  .header-actions {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+  }
+
+  .header-icon-link,
+  .settings-trigger,
+  .modal-close {
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    height: 26px;
+    justify-content: center;
+    padding: 0;
+    width: 26px;
+  }
+
+  .settings-trigger {
+    background: var(--tab-bg);
+  }
+
+  .header-icon-link {
+    text-decoration: none;
+  }
+
+  .donate-trigger {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #a16207;
+  }
+
+  .header-icon-link:hover,
+  .settings-trigger:hover,
+  .modal-close:hover {
+    background: rgba(169, 255, 104, 0.26);
+    border-color: rgba(22, 163, 74, 0.38);
+    color: var(--accent-dark);
+  }
+
+  .donate-trigger:hover {
+    background: #fef3c7;
+    border-color: #fbbf24;
+    color: #92400e;
+  }
+
+  .header-icon-link:focus-visible,
+  .settings-trigger:focus-visible,
+  .modal-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .header-icon-link svg,
+  .settings-trigger svg,
+  .modal-close svg {
+    height: 14px;
+    width: 14px;
   }
 
   .title-group {
@@ -84,13 +163,12 @@
   .sub {
     font-size: 11px;
     color: var(--text-secondary);
-    margin: 0 0 8px;
+    margin: 0 0 9px;
     line-height: 1.35;
   }
 
-  /* Profile Segmented Control */
   .profile-section {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .profile-label {
@@ -103,92 +181,350 @@
     display: block;
   }
 
-  .profile-tabs {
-    display: flex;
-    background: var(--tab-bg);
-    padding: 3px;
-    border-radius: 8px;
-    gap: 3px;
+  .profile-select {
+    background: var(--input-bg);
     border: 1px solid var(--border-color);
-  }
-
-  .profile-tab {
-    flex: 1;
-    text-align: center;
-    padding: 5px 8px;
+    border-radius: 7px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
     font-size: 11.5px;
     font-weight: 600;
-    color: var(--text-secondary);
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    min-height: 34px;
+    padding: 8px 10px;
+    width: 100%;
   }
 
-  .profile-tab:hover:not(.active) {
-    color: var(--text-primary);
-  }
-
-  .profile-tab.active {
-    background: var(--bg-color);
-    color: var(--accent-dark);
-    box-shadow: var(--pill-shadow);
+  .profile-select:focus-visible {
+    border-color: var(--accent);
+    outline: 2px solid rgba(22, 163, 74, 0.3);
+    outline-offset: 1px;
   }
 
   .list-container {
     display: flex;
     flex-direction: column;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .shortcut-hint {
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 1.35;
+    margin: 1px 0 10px;
+  }
+
+  .shortcut-hint kbd {
+    background: var(--tab-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 9.5px;
+    padding: 1px 3px;
+  }
+
+  .onboarding {
+    background: #ffffff;
+    border: 1px solid color-mix(in srgb, var(--border-color) 82%, var(--accent));
+    border-radius: 14px;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.08);
+    color: var(--text-primary);
+    display: grid;
+    gap: 14px;
+    min-height: 254px;
+    padding: 18px;
+    width: min(372px, calc(100% - 28px));
+  }
+
+  .onboarding:not([open]) {
+    display: none;
+  }
+
+  .onboarding::backdrop {
+    background: rgba(15, 23, 42, 0.28);
+  }
+
+  .preferences-dialog {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.08);
+    color: var(--text-primary);
+    padding: 14px;
+    width: min(392px, calc(100% - 28px));
+  }
+
+  .preferences-dialog:not([open]) {
+    display: none;
+  }
+
+  .preferences-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.28);
+  }
+
+  .preferences-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .preferences-header h2 {
+    font-size: 14px;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .preferences-dialog .toggle-container {
+    margin: 0 0 6px;
+  }
+
+  .preferences-dialog .site-settings {
+    margin: 0;
+  }
+
+  .onboarding-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .onboarding-context {
+    color: var(--accent-dark);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .onboarding-progress {
+    display: flex;
+    align-items: center;
     gap: 5px;
-    max-height: 215px;
-    overflow-y: auto;
-    padding-right: 2px;
-    margin-bottom: 8px;
-    scrollbar-width: thin;
+    color: var(--text-secondary);
+    font-size: 10.5px;
+    font-weight: 600;
+    justify-content: flex-end;
   }
 
-  .list-container::-webkit-scrollbar {
-    width: 4px;
+  .onboarding-step-markers {
+    display: flex;
+    gap: 4px;
   }
 
-  .list-container::-webkit-scrollbar-thumb {
+  .onboarding-step-marker {
     background: var(--border-color);
-    border-radius: 4px;
+    border-radius: 99px;
+    display: block;
+    height: 4px;
+    transition: background-color 0.18s ease, width 0.18s ease;
+    width: 10px;
+  }
+
+  .onboarding-step-marker.active {
+    background: var(--accent);
+    width: 22px;
+  }
+
+  .onboarding-slide {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+
+  .onboarding-slide[hidden] {
+    display: none;
+  }
+
+  .onboarding-eyebrow {
+    color: var(--accent-dark);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .onboarding-slide h2 {
+    font-size: 19px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0;
+  }
+
+  .onboarding-copy {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .onboarding-demo {
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg-color));
+    border: 1px solid color-mix(in srgb, var(--border-color) 82%, var(--accent));
+    border-radius: 8px;
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .onboarding-demo-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .demo-composer {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    min-height: 30px;
+    padding: 7px 8px;
+  }
+
+  .demo-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .demo-reply {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10.5px;
+    padding: 4px 8px;
+  }
+
+  .demo-reply:hover {
+    border-color: var(--accent);
+  }
+
+  .demo-reply-static {
+    cursor: default;
+  }
+
+  .demo-reply:focus-visible,
+  .onboarding-actions button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .demo-send-control {
+    align-items: center;
+    display: flex;
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .demo-send-control input {
+    accent-color: var(--accent);
+  }
+
+  .demo-send-result {
+    color: var(--text-secondary);
+    font-size: 10.5px;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .onboarding-actions {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 2px;
+  }
+
+  .onboarding-actions .onboarding-skip {
+    color: var(--text-secondary);
+    margin-right: auto;
+  }
+
+  .onboarding-actions button {
+    background: transparent;
+    border: 0;
+    border-radius: 5px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 10px;
+  }
+
+  .onboarding-actions .onboarding-primary {
+    background: var(--accent-gradient);
+    box-shadow: 0 1px 2px rgba(21, 128, 61, 0.25);
+    color: #ffffff;
+  }
+
+  .onboarding-actions .onboarding-primary:hover {
+    background: var(--accent-hover);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .onboarding *,
+    .onboarding *::before,
+    .onboarding *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   .row {
     display: flex;
-    gap: 4px;
+    gap: 5px;
     align-items: center;
-    background: var(--card-bg);
-    padding: 3px 5px;
-    border-radius: 7px;
-    border: 1px solid var(--card-border);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    background: color-mix(in srgb, var(--card-bg) 72%, var(--bg-color));
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   }
 
-  .row:hover {
-    border-color: rgba(169, 255, 104, 0.8);
+  .row:hover,
+  .row:focus-within {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   }
 
   input[type="text"] {
-    background: var(--input-bg);
+    background: transparent;
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 4px 7px;
+    border: 1px solid transparent;
+    min-height: 28px;
+    padding: 6px 7px;
     font-size: 11.5px;
     border-radius: 5px;
-    outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   }
 
-  input[type="text"]:focus {
+  input[type="text"]:focus-visible {
+    background: var(--input-bg);
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent-glow);
+    outline: none;
   }
 
-  .emoji-input { width: 34px; text-align: center; font-size: 12px; }
-  .label-input { width: 85px; font-weight: 500; }
+  .emoji-input {
+    width: 34px;
+    text-align: center;
+    font-size: 12px;
+    background: color-mix(in srgb, var(--accent) 11%, transparent) !important;
+  }
+  .label-input { width: 85px; font-weight: 600; }
   .text-input { flex: 1; }
 
   .remove {
@@ -215,7 +551,6 @@
   }
 
   .btn {
-    width: 100%;
     padding: 6.5px 12px;
     border-radius: 7px;
     font-size: 11.5px;
@@ -231,55 +566,69 @@
     transform: scale(0.98);
   }
 
-  #add {
-    background: var(--card-bg);
-    color: var(--text-primary);
-    border: 1px dashed var(--accent);
-    margin-bottom: 7px;
-    opacity: 0.9;
-  }
-
-  #add:hover {
-    opacity: 1;
-    background: rgba(169, 255, 104, 0.18);
-    transform: translateY(-0.5px);
-  }
-
   .actions-row {
     display: flex;
-    gap: 6px;
-    margin-top: 7px;
+    gap: 8px;
+    margin-top: 10px;
   }
 
-  .actions-row .btn {
-    margin-top: 0;
-  }
-
-  #save {
-    flex: 1.3;
-    background: var(--accent-gradient);
+  .action-primary {
+    background: var(--accent-dark);
+    border: 1px solid var(--accent-dark);
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+    flex: 1 1 auto;
+    box-shadow: none;
   }
 
-  #save:hover {
-    background: var(--accent-hover);
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
-    transform: translateY(-0.5px);
+  .action-primary:hover {
+    background: #166534;
+    box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18);
   }
 
-  .secondary-btn {
-    flex: 1;
+  .action-secondary {
     background: var(--card-bg);
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
+    flex: 0 0 auto;
+    padding-inline: 12px;
   }
 
-  .secondary-btn:hover {
+  .action-secondary:hover {
     color: var(--text-primary);
-    border-color: var(--accent);
-    background: rgba(169, 255, 104, 0.12);
-    transform: translateY(-0.5px);
+    border-color: var(--text-muted);
+    background: var(--tab-bg);
+  }
+
+  .footer {
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 9px;
+    justify-content: center;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .footer a {
+    color: var(--text-secondary);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .footer a:hover,
+  .footer a:focus-visible {
+    color: var(--accent-dark);
+    text-decoration: underline;
+  }
+
+  .footer a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .footer .sep {
+    color: var(--text-muted);
   }
 
   .toggle-container {
@@ -292,6 +641,98 @@
     border: 1px solid var(--card-border);
     font-size: 11.5px;
     font-weight: 500;
+  }
+
+  .toggle-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .toggle-title {
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .toggle-hint {
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  .site-settings {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 7px;
+    font-size: 11.5px;
+  }
+
+  .site-settings summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 7px 10px;
+  }
+
+  .site-settings summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .site-settings-summary-hint {
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .site-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 8px;
+    border: 0;
+    border-top: 1px solid var(--card-border);
+    margin: 0;
+    padding: 7px 10px 8px;
+  }
+
+  .site-option {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .site-option input {
+    accent-color: var(--accent);
+    flex: 0 0 auto;
+    margin: 0 5px 0 0;
+  }
+
+  .site-option input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .site-option label {
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .site-settings-disabled {
+    opacity: 0.6;
+  }
+
+  .visually-hidden {
+    position: absolute !important;
+    clip-path: inset(50%) !important;
+    overflow: hidden !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    white-space: nowrap !important;
   }
 
   .switch {
@@ -333,62 +774,24 @@
     transform: translateX(16px);
   }
 
-  .donate-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    margin-top: 7px;
-    padding: 6.5px 12px;
-    background: linear-gradient(135deg, #ffdd00 0%, #f59e0b 100%);
-    color: #1a1a1a;
+  .save-toast {
+    background: #14532d;
+    border: 1px solid rgba(187, 247, 208, 0.4);
+    border-radius: 999px;
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.2);
+    color: #f0fdf4;
+    font-size: 11px;
     font-weight: 700;
-    font-size: 11.5px;
-    border-radius: 7px;
-    text-decoration: none;
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
-    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.15s ease;
+    inset: auto 14px 12px auto;
+    margin: 0;
+    padding: 7px 10px;
+    position: fixed;
+    transform: translateY(4px);
   }
 
-  .donate-btn:hover {
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-    transform: translateY(-0.5px);
-    text-decoration: none;
-  }
-
-  .donate-btn:active {
-    transform: scale(0.98);
-  }
-
-  .footer {
-    margin-top: 8px;
-    padding-top: 7px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 10.5px;
-  }
-
-  .footer a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.15s ease, opacity 0.15s ease;
-    opacity: 0.85;
-  }
-
-  .footer a:hover {
-    opacity: 1;
-    text-decoration: underline;
-  }
-
-  .footer .sep {
-    color: var(--text-muted);
-    opacity: 0.5;
+  .save-toast:popover-open,
+  .save-toast.is-visible {
+    transform: translateY(0);
   }
 </style>
 </head>
@@ -399,45 +802,166 @@
       <h1>Prompticon</h1>
       <span class="badge" id="versionBadge">v1.3.0</span>
     </div>
-  </div>
-  <p class="sub">Quick-reply toolbar for ChatGPT, Claude, Gemini, Grok, Mistral, Qwen & Meta AI.</p>
-
-  <div class="profile-section">
-    <span class="profile-label">Select Profile</span>
-    <div class="profile-tabs">
-      <button class="profile-tab active" data-profile="general">🌐 General</button>
-      <button class="profile-tab" data-profile="quiz">🎓 Quiz (A-E)</button>
+    <div class="header-actions">
+      <a class="header-icon-link donate-trigger ext-link" href="https://buymeacoffee.com/qainsights" target="_blank" aria-label="Support Prompticon on Buy Me a Coffee">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="8.5" width="17" height="12" rx="2"></rect>
+          <path d="M12 8.5v12M3.5 13h17M12 8.5c-2.4 0-4.3-1-4.3-2.8 0-1 0.8-1.7 1.8-1.7 1.5 0 2.5 1.7 2.5 4.5Zm0 0c2.4 0 4.3-1 4.3-2.8 0-1-0.8-1.7-1.8-1.7-1.5 0-2.5 1.7-2.5 4.5Z"></path>
+        </svg>
+      </a>
+      <button class="settings-trigger" id="settingsButton" type="button" aria-label="Open settings" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 7h16M4 17h16"></path>
+          <circle cx="9" cy="7" r="2.1"></circle>
+          <circle cx="15" cy="17" r="2.1"></circle>
+        </svg>
+      </button>
     </div>
+  </div>
+  <p class="sub">Quick replies for your favorite AI chats.</p>
+
+  <dialog class="onboarding" id="onboarding" aria-labelledby="onboardingTitle">
+    <header class="onboarding-header">
+      <span class="onboarding-context">Getting started</span>
+      <div class="onboarding-progress">
+        <span id="onboardingProgressText">1 of 3</span>
+        <span class="onboarding-step-markers" aria-hidden="true">
+          <span class="onboarding-step-marker active" data-onboarding-marker="0"></span>
+          <span class="onboarding-step-marker" data-onboarding-marker="1"></span>
+          <span class="onboarding-step-marker" data-onboarding-marker="2"></span>
+        </span>
+      </div>
+    </header>
+
+    <section class="onboarding-slide" data-onboarding-step="0">
+      <p class="onboarding-eyebrow">Welcome to Prompticon</p>
+      <h2 id="onboardingTitle" tabindex="-1">Keep useful replies one click away.</h2>
+      <p class="onboarding-copy">Prompticon adds your most-used responses directly above the chat composer on the AI sites you choose.</p>
+      <div class="onboarding-demo">
+        <p class="onboarding-demo-label">Your workflow</p>
+        <div class="demo-replies" aria-hidden="true">
+          <span class="demo-reply demo-reply-static">🐛 Debug</span>
+          <span class="demo-reply demo-reply-static">📝 More detail</span>
+          <span class="demo-reply demo-reply-static">✨ Polish</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="onboarding-slide" data-onboarding-step="1" hidden>
+      <p class="onboarding-eyebrow">Try it</p>
+      <h2 tabindex="-1">Click a reply to fill the composer.</h2>
+      <p class="onboarding-copy">Use this safe example to see the main interaction before you start customizing your own profiles.</p>
+      <div class="onboarding-demo">
+        <p class="onboarding-demo-label">Example composer</p>
+        <div class="demo-composer" id="demoComposer" aria-live="polite">Your message will appear here.</div>
+        <div class="demo-replies" role="group" aria-label="Try an example quick reply">
+          <button class="demo-reply" type="button" data-demo-reply="Can you go into more detail?">📝 More detail</button>
+          <button class="demo-reply" type="button" data-demo-reply="Continue">➡️ Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="onboarding-slide" data-onboarding-step="2" hidden>
+      <p class="onboarding-eyebrow">You stay in control</p>
+      <h2 tabindex="-1">Choose whether a reply fills or sends.</h2>
+      <p class="onboarding-copy">Fill-only is the default. Turn on send-now only when you are comfortable submitting the selected reply immediately.</p>
+      <div class="onboarding-demo">
+        <label class="demo-send-control" for="demoSendMode">
+          <input id="demoSendMode" type="checkbox" />
+          Send message on click
+        </label>
+        <p class="demo-send-result" id="demoSendResult" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <div class="onboarding-actions">
+      <button class="onboarding-skip" id="onboardingSkip" type="button">Skip onboarding</button>
+      <button id="onboardingBack" type="button" hidden>Back</button>
+      <button class="onboarding-primary" id="onboardingNext" type="button">Next</button>
+      <button class="onboarding-primary" id="onboardingFinish" type="button" hidden>Start customizing</button>
+    </div>
+  </dialog>
+
+  <dialog class="preferences-dialog" id="preferencesDialog" aria-labelledby="preferencesTitle">
+    <header class="preferences-header">
+      <h2 id="preferencesTitle">Settings</h2>
+      <button class="modal-close" id="closePreferences" type="button" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18"></path>
+        </svg>
+      </button>
+    </header>
+
+    <div class="toggle-container">
+      <div class="toggle-copy">
+        <span class="toggle-title">Send message on click</span>
+        <span class="toggle-hint">Off: fill the chat input for review. On: send immediately.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="autoSend" aria-label="Send message immediately when a quick reply is clicked" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-container">
+      <div class="toggle-copy">
+        <span class="toggle-title">Smart question detection</span>
+        <span class="toggle-hint">Off by default. Locally suggest clear answers from the latest AI response.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="smartQuestionDetection" aria-label="Enable smart question detection" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-container">
+      <div class="toggle-copy">
+        <span class="toggle-title">Show quick replies toolbar</span>
+        <span class="toggle-hint">Turn off to hide the toolbar on chat pages.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toolbarEnabled" aria-label="Show quick replies toolbar on chat pages" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <details class="site-settings" id="siteSettings">
+      <summary>
+        Choose websites
+        <span class="site-settings-summary-hint">All enabled by default</span>
+      </summary>
+      <fieldset class="site-list" id="siteList">
+        <legend class="visually-hidden">Websites where the quick replies toolbar is shown</legend>
+      </fieldset>
+    </details>
+  </dialog>
+
+  <main id="settingsContent">
+  <div class="profile-section">
+    <label class="profile-label" for="profileSelect">Select profile</label>
+    <select class="profile-select" id="profileSelect" name="profile"></select>
   </div>
 
   <div id="list" class="list-container"></div>
-
-  <button id="add" class="btn">+ Add Quick Reply</button>
-
-  <div class="toggle-container">
-    <span>Auto-send message on click</span>
-    <label class="switch">
-      <input type="checkbox" id="autoSend" />
-      <span class="slider"></span>
-    </label>
-  </div>
+  <p class="shortcut-hint">Use <kbd>Alt</kbd> + <kbd>1</kbd>–<kbd>9</kbd> for replies · <kbd>{{topic}}</kbd> asks for a value.</p>
 
   <div class="actions-row">
-    <button id="save" class="btn">Save Changes</button>
-    <button id="resetPos" class="btn secondary-btn" type="button" title="Reset toolbar to default position above chat box">↺ Reset Position</button>
+    <button id="add" class="btn action-primary" type="button">+ Add quick reply</button>
+    <button id="resetPos" class="btn action-secondary" type="button" title="Reset toolbar to default position above chat box">↺ Reset position</button>
   </div>
 
-  <a href="https://buymeacoffee.com/qainsights" target="_blank" class="donate-btn ext-link">
-    ☕ Buy Me a Coffee
-  </a>
-
-  <div class="footer">
+  <footer class="footer" aria-label="Prompticon links">
     <a href="https://qainsights.com" target="_blank" class="ext-link">qainsights.com</a>
-    <span class="sep">•</span>
+    <span class="sep" aria-hidden="true">•</span>
     <a href="https://ai.dosa.dev" target="_blank" class="ext-link">ai.dosa.dev</a>
-  </div>
+  </footer>
+  </main>
 
+  <div class="save-toast" id="saveToast" role="status" aria-live="polite" popover="manual">Saved</div>
+
+  <script src="site-settings.js"></script>
+  <script src="profile-packs.js"></script>
+  <script src="onboarding.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
-

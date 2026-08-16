@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "pack": "powershell -Command \"Compress-Archive -Path manifest.json, content.js, content.css, popup.html, popup.js, assets -DestinationPath prompticon-v1.3.0.zip -Force\""
+    "pack": "powershell -Command \"Compress-Archive -Path manifest.json, site-settings.js, command-palette.js, smart-detection.js, profile-packs.js, long-press.js, template-variables.js, onboarding.js, content.js, content.css, popup.html, popup.js, assets -DestinationPath prompticon-v1.3.0.zip -Force\""
   },
   "keywords": [
     "chrome-extension",
