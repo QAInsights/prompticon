@@ -62,10 +62,19 @@ test('popup editor keeps the reply controls calm, compact, and accessible', () =
   assert.match(popupHtml, /<footer class="footer" aria-label="Prompticon links">/);
   assert.match(popupHtml, /href="https:\/\/qainsights\.com"/);
   assert.match(popupHtml, /href="https:\/\/ai\.dosa\.dev"/);
-  assert.match(popupScript, /aria-label="Reply emoji"/);
-  assert.match(popupScript, /aria-label="Reply label"/);
-  assert.match(popupScript, /aria-label="Reply text"/);
-  assert.match(popupScript, /aria-label="Remove quick reply"/);
+  assert.match(popupScript, /'Reply emoji'/);
+  assert.match(popupScript, /'Reply label'/);
+  assert.match(popupScript, /'Reply text'/);
+  assert.match(popupScript, /'Remove quick reply'/);
+});
+
+test('popup renders stored reply values as text instead of parsing markup', () => {
+  const popupScript = fs.readFileSync(path.join(root, 'popup.js'), 'utf8');
+
+  assert.doesNotMatch(popupScript, /\.innerHTML\s*=/);
+  assert.match(popupScript, /listEl\.replaceChildren\(\)/);
+  assert.match(popupScript, /input\.value = typeof value === 'string' \? value : ''/);
+  assert.match(popupScript, /removeButton\.textContent = '\\u00d7'/);
 });
 
 test('reply and preference updates save immediately and show confirmation', () => {

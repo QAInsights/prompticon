@@ -1,8 +1,8 @@
 # Prompticon Privacy Policy
 
-**Last updated:** August 16, 2026
+**Last updated:** August 18, 2026
 
-Prompticon is a browser extension that adds reusable quick replies to supported AI chat websites. This policy explains how Prompticon handles information.
+Prompticon is a Chrome and Firefox browser extension that adds reusable quick replies to supported AI chat websites. This policy explains how Prompticon handles information.
 
 ## Summary
 
@@ -21,9 +21,11 @@ Template values and page content are used in memory in your browser to complete 
 
 ## Storage
 
-Prompticon stores quick replies and preferences using `chrome.storage.sync`. If you are signed in to Chrome and have Chrome Sync enabled, Google may synchronize those settings between your Chrome browsers under Google's own privacy practices.
+Prompticon stores quick replies and preferences using the browser's extension synchronization storage. Chrome may synchronize these settings through Chrome Sync, and Firefox may synchronize them through Firefox Sync, when you are signed in and synchronization is enabled. Google or Mozilla handles that browser-managed synchronization under its own privacy practices.
 
-Toolbar position is stored with `chrome.storage.local` on the device where you set it. Prompticon does not use its own servers or databases.
+Toolbar position is stored with the browser's local extension storage on the device where you set it. Prompticon does not use its own servers or databases.
+
+Prompticon is not allowed to run in private browsing windows and does not store information from private browsing sessions.
 
 ## Website Access
 
@@ -39,7 +41,7 @@ The optional support icon opens Buy Me a Coffee only when you choose to click it
 
 ## Data Retention and Control
 
-You control the information stored by Prompticon. You can edit or delete quick replies and settings in the extension popup. You can remove extension data through Chrome's extension settings or by uninstalling Prompticon.
+You control the information stored by Prompticon. You can edit or delete quick replies and settings in the extension popup. You can remove extension data through Chrome or Firefox extension settings, or by uninstalling Prompticon.
 
 ## Children's Privacy
 

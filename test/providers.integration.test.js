@@ -8,6 +8,12 @@ const ORIGINAL_GLOBALS = Object.fromEntries(
     .map((name) => [name, global[name]])
 );
 
+test('manifest uses only storage and static content-script matches for site access', () => {
+  assert.deepEqual(manifest.permissions, ['storage']);
+  assert.equal(manifest.host_permissions, undefined);
+  assert.ok(manifest.content_scripts.every((entry) => entry.matches?.length > 0));
+});
+
 function restoreGlobals() {
   Object.entries(ORIGINAL_GLOBALS).forEach(([name, value]) => {
     if (value === undefined) delete global[name];
@@ -106,7 +112,6 @@ test('every supported provider completes the configured quick-reply workflow', a
       global.KeyboardEvent = class KeyboardEvent { constructor(type, options) { this.type = type; Object.assign(this, options); } };
       installInputValueSetters();
 
-      assert.ok(manifest.host_permissions.includes(`https://${host}/*`), `${provider.name} host permission is present`);
       assert.ok(contentScriptMatches.has(`https://${host}/*`), `${provider.name} content script is injected`);
       assert.equal(content.getProvider()?.id, provider.id);
       assert.equal(content.getInputEl(), composer);

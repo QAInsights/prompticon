@@ -5,7 +5,7 @@ const content = require('../content.js');
 
 test('SUPPORTED_SITES exposes unique settings for every supported provider', () => {
   const ids = siteSettings.SUPPORTED_SITES.map((site) => site.id);
-  assert.equal(ids.length, 8);
+  assert.equal(ids.length, 9);
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(siteSettings.SUPPORTED_SITES.every((site) => site.id && site.name));
   assert.deepEqual(ids, content.PROVIDERS.map((provider) => provider.id));
@@ -22,6 +22,7 @@ test('normalizeSiteEnabled defaults sites to enabled and preserves explicit choi
 
 test('isToolbarEnabled combines the global switch with a site override', () => {
   assert.equal(siteSettings.isToolbarEnabled(true, { grok: false }, 'grok'), false);
+  assert.equal(siteSettings.isToolbarEnabled(true, { copilot: false }, 'copilot'), false);
   assert.equal(siteSettings.isToolbarEnabled(true, { grok: false }, 'chatgpt'), true);
   assert.equal(siteSettings.isToolbarEnabled(false, { chatgpt: true }, 'chatgpt'), false);
   assert.equal(siteSettings.isToolbarEnabled(true, {}, null), true);

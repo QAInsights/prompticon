@@ -5,6 +5,7 @@ coverage/
 
 # Packaged Chrome Web Store artifacts
 prompticon-*.zip
+web-ext-artifacts/
 
 # Local agent and editor configuration
 .qwen/

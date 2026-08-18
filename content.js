@@ -61,6 +61,11 @@ const PROVIDERS = [
     id: 'deepseek', name: 'DeepSeek', hosts: ['chat.deepseek.com'],
     inputSelectors: ['textarea[placeholder*="Message" i]', 'textarea[placeholder*="DeepSeek" i]', 'textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]'],
     sendSelectors: ['button[type="submit"]', 'button[aria-label*="Send" i]', 'button[title*="Send" i]', 'button[data-testid="send-button"]', 'button[class*="send" i]']
+  },
+  {
+    id: 'copilot', name: 'Copilot', hosts: ['copilot.microsoft.com'],
+    inputSelectors: ['textarea#userInput', 'textarea[aria-label*="Copilot" i]', 'textarea[placeholder*="message" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[aria-label*="Submit" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]', 'button[data-testid="send-button"]']
   }
 ];
 
@@ -287,6 +292,22 @@ function getShortcutReply(config, event) {
   return index === null ? null : config?.quickReplies?.[index] || null;
 }
 
+function isTrustedUserEvent(event) {
+  return event?.isTrusted === true;
+}
+
+function getReplyDisplayLabel(reply) {
+  const label = typeof reply?.label === 'string' ? reply.label.trim() : '';
+  return label || 'Untitled reply';
+}
+
+function getReplyButtonTitle(reply, config, index, hasLongPress = false) {
+  const action = config?.autoSend ? 'Send' : 'Fill';
+  const shortcut = index < 9 ? ` (Alt+${index + 1})` : '';
+  const longPressHint = hasLongPress ? ' — hold for expanded reply' : '';
+  return `${action} ${getReplyDisplayLabel(reply)}${shortcut}${longPressHint}`;
+}
+
 function insertQuickReply(reply, config) {
   if (!reply || !config || !setInputText(reply.text)) return false;
   if (config.autoSend) setTimeout(() => trySend(getSendButton()), 80);
@@ -312,15 +333,19 @@ function addQuickReplyInteraction(button, reply, config) {
   });
 
   if (!controller) {
-    button.addEventListener('mousedown', (event) => event.preventDefault());
+    button.addEventListener('mousedown', (event) => {
+      if (isTrustedUserEvent(event)) event.preventDefault();
+    });
     button.addEventListener('click', (event) => {
       event.preventDefault();
+      if (!isTrustedUserEvent(event)) return;
       if (!isDragging) activateQuickReply(reply, config);
     });
     return;
   }
 
-  const endPress = () => {
+  const endPress = (event) => {
+    if (!isTrustedUserEvent(event)) return;
     if (!pressInProgress) return;
     pressInProgress = false;
     button.classList.remove('cqr-long-pressing');
@@ -328,7 +353,7 @@ function addQuickReplyInteraction(button, reply, config) {
   };
 
   button.addEventListener('mousedown', (event) => {
-    if (event.button !== 0 || isDragging) return;
+    if (!isTrustedUserEvent(event) || event.button !== 0 || isDragging) return;
     event.preventDefault();
     pressInProgress = true;
     clickGuard.reset();
@@ -338,7 +363,8 @@ function addQuickReplyInteraction(button, reply, config) {
     releaseTarget.addEventListener('mouseup', endPress, { once: true });
   });
 
-  button.addEventListener('mouseleave', () => {
+  button.addEventListener('mouseleave', (event) => {
+    if (!isTrustedUserEvent(event)) return;
     if (!pressInProgress) return;
     pressInProgress = false;
     button.classList.remove('cqr-long-pressing');
@@ -347,6 +373,7 @@ function addQuickReplyInteraction(button, reply, config) {
 
   button.addEventListener('click', (event) => {
     event.preventDefault();
+    if (!isTrustedUserEvent(event)) return;
     if (isDragging || clickGuard.consume()) return;
     activateQuickReply(reply, config);
   });
@@ -463,6 +490,7 @@ function createTemplateVariableDialog() {
   form.className = 'cqr-template-form';
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!isTrustedUserEvent(event)) return;
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(templateVariableNames.map((name) => [name, form.elements[name].value]));
     const resolvedReply = { ...templateReply, text: TEMPLATE_VARIABLES.renderTemplate(templateReply.text, values) };
@@ -518,7 +546,9 @@ function openTemplateVariableDialog(reply, config, variables) {
   cancel.type = 'button';
   cancel.className = 'cqr-template-cancel';
   cancel.textContent = 'Cancel';
-  cancel.addEventListener('click', closeTemplateVariableDialog);
+  cancel.addEventListener('click', (event) => {
+    if (isTrustedUserEvent(event)) closeTemplateVariableDialog();
+  });
   const submit = document.createElement('button');
   submit.type = 'submit';
   submit.className = 'cqr-template-submit';
@@ -565,9 +595,11 @@ function renderCommandPaletteResults() {
     const result = document.createElement('button');
     result.type = 'button';
     result.className = 'cqr-command-result' + (index === commandPaletteActiveIndex ? ' cqr-command-result-active' : '');
-    result.textContent = `${reply.emoji || '💬'} ${reply.label || reply.text}`;
-    result.title = reply.text || reply.label || '';
-    result.addEventListener('click', () => selectCommandPaletteReply(reply));
+    result.textContent = `${reply.emoji || '💬'} ${getReplyDisplayLabel(reply)}`;
+    result.title = `Use ${getReplyDisplayLabel(reply)}`;
+    result.addEventListener('click', (event) => {
+      if (isTrustedUserEvent(event)) selectCommandPaletteReply(reply);
+    });
     commandPaletteResultsEl.appendChild(result);
   });
 }
@@ -612,6 +644,7 @@ function createCommandPalette() {
     renderCommandPaletteResults();
   });
   input.addEventListener('keydown', (event) => {
+    if (!isTrustedUserEvent(event)) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       commandPaletteActiveIndex = COMMAND_PALETTE.getNextActiveIndex(
@@ -741,7 +774,7 @@ function setupDraggable(el) {
   let startX = 0, startY = 0, initLeft = 0, initTop = 0, hasMoved = false;
 
   el.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
+    if (!isTrustedUserEvent(e) || e.button !== 0) return;
     startX = e.clientX;
     startY = e.clientY;
     hasMoved = false;
@@ -751,6 +784,7 @@ function setupDraggable(el) {
     initTop = r.top;
 
     const onPointerMove = (m) => {
+      if (!isTrustedUserEvent(m)) return;
       const dx = m.clientX - startX, dy = m.clientY - startY;
       if (!hasMoved && Math.hypot(dx, dy) < 5) return;
       if (!hasMoved) {
@@ -769,7 +803,8 @@ function setupDraggable(el) {
       el.style.top = Math.round(newT) + 'px';
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (event) => {
+      if (!isTrustedUserEvent(event)) return;
       if (typeof window !== 'undefined') {
         window.removeEventListener('pointermove', onPointerMove);
         window.removeEventListener('pointerup', onPointerUp);
@@ -810,11 +845,10 @@ function buildToolbar(config) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'cqr-btn cqr-reply-btn';
-    btn.textContent = `${r.emoji} ${r.label}`;
+    btn.textContent = `${r.emoji} ${getReplyDisplayLabel(r)}`;
     const shortcut = index < 9 ? `Alt+${index + 1}` : null;
     const longPressReply = LONG_PRESS.getLongPressReply(r);
-    const shortTitle = shortcut ? `${r.text} (${shortcut})` : r.text;
-    btn.title = longPressReply ? `${shortTitle} — hold for: ${longPressReply.text}` : shortTitle;
+    btn.title = getReplyButtonTitle(r, config, index, Boolean(longPressReply));
     if (shortcut) btn.setAttribute('aria-keyshortcuts', shortcut);
     addQuickReplyInteraction(btn, r, config);
     bar.appendChild(btn);
@@ -827,7 +861,7 @@ function buildToolbar(config) {
       const smartBtn = document.createElement('button');
       smartBtn.type = 'button';
       smartBtn.className = 'cqr-btn cqr-reply-btn cqr-smart-reply-btn';
-      smartBtn.textContent = `${reply.emoji} ${reply.label}`;
+      smartBtn.textContent = `${reply.emoji} ${getReplyDisplayLabel(reply)}`;
       const longPressReply = LONG_PRESS.getLongPressReply(reply);
       smartBtn.title = longPressReply
         ? `Suggested from the latest assistant response — hold for: ${longPressReply.text}`
@@ -846,9 +880,12 @@ function buildToolbar(config) {
   commandBtn.title = 'Search quick replies (Alt+P)';
   commandBtn.setAttribute('aria-label', 'Search quick replies');
   commandBtn.setAttribute('aria-keyshortcuts', 'Alt+P');
-  commandBtn.addEventListener('mousedown', (e) => e.preventDefault());
+  commandBtn.addEventListener('mousedown', (e) => {
+    if (isTrustedUserEvent(e)) e.preventDefault();
+  });
   commandBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    if (!isTrustedUserEvent(e)) return;
     if (!isDragging) openCommandPalette(config);
   });
   bar.appendChild(commandBtn);
@@ -859,9 +896,12 @@ function buildToolbar(config) {
   toggleBtn.textContent = isToolbarCollapsed ? '💬 Quick Replies' : '✕';
   toggleBtn.title = isToolbarCollapsed ? 'Expand Prompticon quick replies' : 'Collapse quick replies';
   toggleBtn.setAttribute('aria-label', isToolbarCollapsed ? 'Expand quick replies' : 'Collapse quick replies');
-  toggleBtn.addEventListener('mousedown', (e) => e.preventDefault());
+  toggleBtn.addEventListener('mousedown', (e) => {
+    if (isTrustedUserEvent(e)) e.preventDefault();
+  });
   toggleBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    if (!isTrustedUserEvent(e)) return;
     if (isDragging) return;
     isToolbarCollapsed = !isToolbarCollapsed;
     bar.classList.toggle('cqr-collapsed', isToolbarCollapsed);
@@ -878,9 +918,12 @@ function buildToolbar(config) {
   resetBtn.textContent = '↺';
   resetBtn.title = 'Reset position above chat composer';
   resetBtn.setAttribute('aria-label', 'Reset position');
-  resetBtn.addEventListener('mousedown', (e) => e.preventDefault());
+  resetBtn.addEventListener('mousedown', (e) => {
+    if (isTrustedUserEvent(e)) e.preventDefault();
+  });
   resetBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    if (!isTrustedUserEvent(e)) return;
     if (isDragging) return;
     resetPosition();
   });
@@ -963,6 +1006,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
   window.addEventListener('scroll', () => { if (panelEl?.classList.contains('cqr-visible')) positionPanel(); }, true);
   window.addEventListener('resize', () => { if (panelEl) positionPanel(); });
   document.addEventListener('keydown', (event) => {
+    if (!isTrustedUserEvent(event)) return;
     if (commandPaletteEl?.open) return;
     if (COMMAND_PALETTE.isCommandPaletteShortcut(event)) {
       if (isModalOpenOnPage()) return;
@@ -1025,6 +1069,9 @@ if (typeof module !== 'undefined' && module.exports) {
     getComposerContainer,
     getShortcutIndex,
     getShortcutReply,
+    isTrustedUserEvent,
+    getReplyDisplayLabel,
+    getReplyButtonTitle,
     isBackdropClick,
     insertQuickReply,
     loadConfig,

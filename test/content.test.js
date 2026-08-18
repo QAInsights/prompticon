@@ -2,10 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const content = require('../content.js');
 
-test('PROVIDERS contains all 8 target LLM providers with valid hosts and selectors', () => {
-  assert.equal(content.PROVIDERS.length, 8);
+test('PROVIDERS contains all 9 target LLM providers with valid hosts and selectors', () => {
+  assert.equal(content.PROVIDERS.length, 9);
   const providerIds = content.PROVIDERS.map(p => p.id);
-  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek']);
+  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek', 'copilot']);
 
   content.PROVIDERS.forEach(p => {
     assert.ok(p.hosts.length > 0, `Provider ${p.id} should have hosts`);
@@ -29,6 +29,7 @@ test('getProvider matches hostnames accurately', () => {
     { host: 'chat.qwen.ai', expected: 'qwen' },
     { host: 'meta.ai', expected: 'meta' },
     { host: 'chat.deepseek.com', expected: 'deepseek' },
+    { host: 'copilot.microsoft.com', expected: 'copilot' },
     { host: 'unknown-domain.com', expected: null }
   ];
 
@@ -49,10 +50,12 @@ test('getProvider matches hostnames accurately', () => {
 test('isToolbarEnabledForSite combines global and per-site visibility settings', () => {
   const grok = content.PROVIDERS.find((provider) => provider.id === 'grok');
   const chatgpt = content.PROVIDERS.find((provider) => provider.id === 'chatgpt');
-  const siteEnabled = { grok: false, chatgpt: true };
+  const copilot = content.PROVIDERS.find((provider) => provider.id === 'copilot');
+  const siteEnabled = { grok: false, chatgpt: true, copilot: false };
 
   assert.equal(content.isToolbarEnabledForSite(true, siteEnabled, grok), false);
   assert.equal(content.isToolbarEnabledForSite(true, siteEnabled, chatgpt), true);
+  assert.equal(content.isToolbarEnabledForSite(true, siteEnabled, copilot), false);
   assert.equal(content.isToolbarEnabledForSite(true, {}, grok), true);
   assert.equal(content.isToolbarEnabledForSite(false, siteEnabled, chatgpt), false);
 });
@@ -214,6 +217,22 @@ test('getShortcutReply maps Alt+1 through Alt+9 to the active quick replies', ()
   assert.equal(content.getShortcutReply(config, { code: 'Digit1' }), null);
 });
 
+test('only trusted browser events can activate injected toolbar controls', () => {
+  assert.equal(content.isTrustedUserEvent({ isTrusted: true }), true);
+  assert.equal(content.isTrustedUserEvent({ isTrusted: false }), false);
+  assert.equal(content.isTrustedUserEvent({}), false);
+  assert.equal(content.isTrustedUserEvent(null), false);
+});
+
+test('injected toolbar metadata does not expose saved prompt text to the host page', () => {
+  const reply = { label: 'Secret', text: 'private prompt content' };
+
+  assert.equal(content.getReplyDisplayLabel(reply), 'Secret');
+  assert.equal(content.getReplyDisplayLabel({ label: '  ', text: 'private prompt content' }), 'Untitled reply');
+  assert.equal(content.getReplyButtonTitle(reply, { autoSend: false }, 0, true), 'Fill Secret (Alt+1) — hold for expanded reply');
+  assert.doesNotMatch(content.getReplyButtonTitle(reply, { autoSend: false }, 0, true), /private prompt content/);
+});
+
 test('command palette backdrop detection only dismisses clicks outside its content box', () => {
   const dialog = {
     getBoundingClientRect: () => ({ left: 100, right: 300, top: 120, bottom: 320 })
@@ -316,12 +335,12 @@ test('buildToolbar creates buttons for each quick reply and collapse button', ()
   assert.equal(toolbar.children[0].textContent, '⠿');
   assert.ok(toolbar.children[0].className.includes('cqr-drag-handle'));
   assert.equal(toolbar.children[1].textContent, '👍 Yes');
-  assert.equal(toolbar.children[1].title, 'Yes (Alt+1) — hold for: Yes, but explain why.');
+  assert.equal(toolbar.children[1].title, 'Fill Yes (Alt+1) — hold for expanded reply');
   assert.equal(toolbar.children[1].attributes['aria-keyshortcuts'], 'Alt+1');
   assert.ok(toolbar.children[1].listeners.mousedown, 'long-press buttons listen for mouse down');
   assert.ok(toolbar.children[1].listeners.mouseleave, 'long-press buttons cancel when the pointer leaves');
   assert.equal(toolbar.children[2].textContent, '👎 No');
-  assert.equal(toolbar.children[2].title, 'No (Alt+2) — hold for: No, but explain why.');
+  assert.equal(toolbar.children[2].title, 'Fill No (Alt+2) — hold for expanded reply');
   assert.equal(toolbar.children[2].attributes['aria-keyshortcuts'], 'Alt+2');
   assert.equal(toolbar.children[3].textContent, '⌕');
   assert.ok(toolbar.children[3].className.includes('cqr-command-btn'));
@@ -332,16 +351,21 @@ test('buildToolbar creates buttons for each quick reply and collapse button', ()
   assert.equal(toolbar.children[5].textContent, '↺');
   assert.ok(toolbar.children[5].className.includes('cqr-reset-btn'));
 
-  // Test toggle button click collapses the toolbar
-  toolbar.children[4].listeners.click({ preventDefault: () => {} });
+  // A supported page cannot toggle injected controls with a synthetic click.
+  toolbar.children[4].listeners.click({ isTrusted: false, preventDefault: () => {} });
+  assert.equal(toolbar.children[4].textContent, '✕');
+  assert.ok(!toolbar.className.includes('cqr-collapsed'));
+
+  // Test trusted toggle button click collapses the toolbar.
+  toolbar.children[4].listeners.click({ isTrusted: true, preventDefault: () => {} });
   assert.equal(toolbar.children[4].textContent, '💬 Quick Replies');
   assert.ok(toolbar.className.includes('cqr-collapsed'));
 
   // Test clicking reset button
-  toolbar.children[5].listeners.click({ preventDefault: () => {} });
+  toolbar.children[5].listeners.click({ isTrusted: true, preventDefault: () => {} });
 
   // Test clicking again re-expands the toolbar
-  toolbar.children[4].listeners.click({ preventDefault: () => {} });
+  toolbar.children[4].listeners.click({ isTrusted: true, preventDefault: () => {} });
   assert.equal(toolbar.children[4].textContent, '✕');
   assert.ok(!toolbar.className.includes('cqr-collapsed'));
 });
@@ -374,10 +398,10 @@ test('loadConfig retrieves configuration from chrome.storage.sync', async () => 
   global.chrome = origChrome;
 });
 
-test('loadConfig applies the visibility setting for the current provider', async () => {
+test('loadConfig applies the Copilot visibility setting for the current provider', async () => {
   const originalChrome = global.chrome;
   const originalLocation = global.location;
-  global.location = { hostname: 'grok.com' };
+  global.location = { hostname: 'copilot.microsoft.com' };
   global.chrome = {
     storage: {
       sync: {
@@ -385,7 +409,7 @@ test('loadConfig applies the visibility setting for the current provider', async
           ...defaults,
           profiles: content.DEFAULT_PROFILES,
           toolbarEnabled: true,
-          siteEnabled: { grok: false, chatgpt: true }
+          siteEnabled: { copilot: false, chatgpt: true }
         })
       }
     }
@@ -473,17 +497,17 @@ test('setupDraggable handles pointer dragging and updates position', () => {
   assert.ok(mockEl.listeners.pointerdown, 'pointerdown listener should be registered');
 
   // Trigger pointerdown
-  mockEl.listeners.pointerdown({ button: 0, clientX: 100, clientY: 200, pointerId: 1 });
+  mockEl.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1 });
   assert.ok(winListeners.pointermove, 'pointermove listener should be registered on window');
 
   // Trigger pointermove by 50px right, 30px down
-  winListeners.pointermove({ clientX: 150, clientY: 230 });
+  winListeners.pointermove({ isTrusted: true, clientX: 150, clientY: 230 });
   assert.equal(mockEl.style.left, '150px');
   assert.equal(mockEl.style.top, '230px');
   assert.ok(mockEl.className.includes('cqr-dragging'));
 
   // Trigger pointerup
-  winListeners.pointerup();
+  winListeners.pointerup({ isTrusted: true });
   assert.ok(!mockEl.className.includes('cqr-dragging'));
 
   global.window = origWin;

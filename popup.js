@@ -153,18 +153,37 @@ function queueQuickReplySave() {
 }
 
 function render() {
-  listEl.innerHTML = '';
+  listEl.replaceChildren();
   const currentReplies = profiles[activeProfile]?.quickReplies || [];
 
   currentReplies.forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'row';
-    row.innerHTML = `
-      <input class="emoji-input" type="text" data-i="${i}" data-field="emoji" value="${r.emoji}" placeholder="Emoji" aria-label="Reply emoji" />
-      <input class="label-input" type="text" data-i="${i}" data-field="label" value="${r.label}" placeholder="Label" aria-label="Reply label" />
-      <input class="text-input" type="text" data-i="${i}" data-field="text" value="${r.text}" placeholder="Prompt text or {{variable}}" aria-label="Reply text" />
-      <button class="remove" data-i="${i}" type="button" aria-label="Remove quick reply" title="Remove quick reply">&times;</button>
-    `;
+
+    const createReplyInput = (className, field, value, placeholder, ariaLabel) => {
+      const input = document.createElement('input');
+      input.className = className;
+      input.type = 'text';
+      input.dataset.i = String(i);
+      input.dataset.field = field;
+      input.value = typeof value === 'string' ? value : '';
+      input.placeholder = placeholder;
+      input.setAttribute('aria-label', ariaLabel);
+      return input;
+    };
+
+    const emojiInput = createReplyInput('emoji-input', 'emoji', r.emoji, 'Emoji', 'Reply emoji');
+    const labelInput = createReplyInput('label-input', 'label', r.label, 'Label', 'Reply label');
+    const textInput = createReplyInput('text-input', 'text', r.text, 'Prompt text or {{variable}}', 'Reply text');
+    const removeButton = document.createElement('button');
+    removeButton.className = 'remove';
+    removeButton.dataset.i = String(i);
+    removeButton.type = 'button';
+    removeButton.setAttribute('aria-label', 'Remove quick reply');
+    removeButton.title = 'Remove quick reply';
+    removeButton.textContent = '\u00d7';
+
+    row.append(emojiInput, labelInput, textInput, removeButton);
     listEl.appendChild(row);
   });
 }
