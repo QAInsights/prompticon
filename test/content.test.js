@@ -392,10 +392,31 @@ test('loadConfig retrieves configuration from chrome.storage.sync', async () => 
   assert.equal(cfg.autoSend, true);
   assert.equal(cfg.smartQuestionDetection, true);
   assert.equal(cfg.toolbarEnabled, false);
+  assert.equal(cfg.timeSavedTracking, true);
   assert.equal(cfg.quickReplies.length, 5);
   assert.equal(cfg.quickReplies[0].label, 'A');
 
   global.chrome = origChrome;
+});
+
+test('recordTimeSaved writes local stats only when tracking is enabled', () => {
+  const originalChrome = global.chrome;
+  let stored = {};
+  global.chrome = {
+    storage: {
+      local: {
+        get: (defaults, callback) => callback({ ...defaults, ...stored }),
+        set: (values) => { stored = { ...stored, ...values }; }
+      }
+    }
+  };
+
+  content.recordTimeSaved('A quick reply', { timeSavedTracking: true });
+  assert.equal(stored.timeSavedStats.uses, 1);
+  content.recordTimeSaved('Another reply', { timeSavedTracking: false });
+  assert.equal(stored.timeSavedStats.uses, 1);
+
+  global.chrome = originalChrome;
 });
 
 test('loadConfig applies the Copilot visibility setting for the current provider', async () => {
