@@ -56,7 +56,7 @@ function renderTimeSavedStats(rawStats) {
   timeSavedValueEl.textContent = formatDuration(stats.totalSeconds);
   timeSavedDetailEl.textContent = stats.uses === 0
     ? 'No quick replies used yet.'
-    : `${stats.uses} quick replies since ${new Date(stats.firstUsedAt).toLocaleDateString('en-US', {
+    : `${stats.uses} quick ${stats.uses === 1 ? 'reply' : 'replies'} since ${new Date(stats.firstUsedAt).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
