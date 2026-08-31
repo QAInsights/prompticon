@@ -49,18 +49,23 @@ let replySaveTimer;
 let saveToastTimer;
 let timeSavedStats = createEmptyStats();
 
+function formatTimeSavedDetail(stats) {
+  if (stats.uses === 0) return 'No quick replies used yet.';
+  const replies = `${stats.uses} quick ${stats.uses === 1 ? 'reply' : 'replies'}`;
+  if (!stats.firstUsedAt) return replies;
+  const since = new Date(stats.firstUsedAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  return `${replies} since ${since}`;
+}
+
 function renderTimeSavedStats(rawStats) {
   if (rawStats !== undefined) timeSavedStats = normalizeStats(rawStats);
-  const stats = timeSavedStats;
   timeSavedCardEl.hidden = !timeSavedTrackingEl.checked;
-  timeSavedValueEl.textContent = formatDuration(stats.totalSeconds);
-  timeSavedDetailEl.textContent = stats.uses === 0
-    ? 'No quick replies used yet.'
-    : `${stats.uses} quick ${stats.uses === 1 ? 'reply' : 'replies'} since ${new Date(stats.firstUsedAt).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    })}`;
+  timeSavedValueEl.textContent = formatDuration(timeSavedStats.totalSeconds);
+  timeSavedDetailEl.textContent = formatTimeSavedDetail(timeSavedStats);
 }
 
 function loadTimeSavedStats() {
