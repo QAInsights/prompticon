@@ -27,6 +27,7 @@ Never type repetitive answers or multiple-choice options by hand again!
 - **Multiple Profiles**: Switch between General, Developer, Writer, Student, Support, Recruiter, Sales, and Quiz reply packs, then tailor each pack to your workflow.
 - **Curated Profile Packs**: Start with tailored quick replies for developers, writers, students, support teams, recruiters, and sales conversations.
 - **Click Behavior Control**: Choose whether a quick reply fills the composer for review (the default) or sends immediately.
+- **Time-saved stats**: See a local-only estimate of time saved by quick replies, with a reset button and a settings toggle.
 - **Long-Press Variants**: Hold a reply for an expanded follow-up—for example, hold **Yes** to insert “Yes, but explain why.”
 - **Template Variables**: Save replies such as `Explain {{topic}} for {{audience}}`; Prompticon asks for the values before inserting or sending the completed prompt.
 - **Keyboard Shortcuts**: Press `Alt` + `1` through `9` to insert the first nine replies in the active profile.

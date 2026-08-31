@@ -33,6 +33,24 @@ test('the popup has no native scrollbar', () => {
   assert.match(popupHtml, /html,\s*body\s*\{\s*overflow:\s*clip;/);
 });
 
+test('time-saved tracking is packaged and configurable', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const popupHtml = fs.readFileSync(path.join(root, 'popup.html'), 'utf8');
+  const popupScript = fs.readFileSync(path.join(root, 'popup.js'), 'utf8');
+  const contentScripts = manifest.content_scripts[0].js;
+
+  assert.ok(contentScripts.indexOf('time-saved.js') < contentScripts.indexOf('content.js'));
+  assert.match(packageJson.scripts['pack:chrome'], /time-saved\.js/);
+  assert.match(popupHtml, /id="timeSavedCard"/);
+  assert.match(popupHtml, /id="timeSavedValue"/);
+  assert.match(popupHtml, /id="timeSavedDetail"/);
+  assert.match(popupHtml, /id="timeSavedTracking"/);
+  assert.match(popupHtml, /id="resetTimeSaved"/);
+  assert.match(popupScript, /resetTimeSavedEl\.addEventListener\('click'/);
+  assert.match(popupScript, /timeSavedTrackingEl\.addEventListener\('change'/);
+});
+
 test('donation support is a compact header icon, not a full-width button', () => {
   const popupHtml = fs.readFileSync(path.join(root, 'popup.html'), 'utf8');
 

@@ -1,14 +1,26 @@
 const { SUPPORTED_SITES, normalizeSiteEnabled } = globalThis.PrompticonSiteSettings;
 const { ONBOARDING_STEP_COUNT, getOnboardingStepState, shouldShowOnboarding } = globalThis.PrompticonOnboarding;
 const { DEFAULT_PROFILES, PROFILE_ORDER } = globalThis.PrompticonProfilePacks;
+const {
+  TIME_SAVED_STORAGE_KEY,
+  TIME_SAVED_SETTING_KEY,
+  createEmptyStats,
+  normalizeStats,
+  formatDuration
+} = globalThis.PrompticonTimeSaved;
 
 const listEl = document.getElementById('list');
 const addBtn = document.getElementById('add');
 const autoSendEl = document.getElementById('autoSend');
 const smartQuestionDetectionEl = document.getElementById('smartQuestionDetection');
 const toolbarEnabledEl = document.getElementById('toolbarEnabled');
+const timeSavedTrackingEl = document.getElementById('timeSavedTracking');
 const siteSettingsEl = document.getElementById('siteSettings');
 const siteListEl = document.getElementById('siteList');
+const timeSavedCardEl = document.getElementById('timeSavedCard');
+const timeSavedValueEl = document.getElementById('timeSavedValue');
+const timeSavedDetailEl = document.getElementById('timeSavedDetail');
+const resetTimeSavedEl = document.getElementById('resetTimeSaved');
 const preferencesDialogEl = document.getElementById('preferencesDialog');
 const settingsButtonEl = document.getElementById('settingsButton');
 const closePreferencesButtonEl = document.getElementById('closePreferences');
@@ -35,6 +47,27 @@ let profiles = JSON.parse(JSON.stringify(DEFAULT_PROFILES));
 let onboardingStep = 0;
 let replySaveTimer;
 let saveToastTimer;
+let timeSavedStats = createEmptyStats();
+
+function renderTimeSavedStats(rawStats) {
+  if (rawStats !== undefined) timeSavedStats = normalizeStats(rawStats);
+  const stats = timeSavedStats;
+  timeSavedCardEl.hidden = !timeSavedTrackingEl.checked;
+  timeSavedValueEl.textContent = formatDuration(stats.totalSeconds);
+  timeSavedDetailEl.textContent = stats.uses === 0
+    ? 'No quick replies used yet.'
+    : `${stats.uses} quick ${stats.uses === 1 ? 'reply' : 'replies'} since ${new Date(stats.firstUsedAt).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
+}
+
+function loadTimeSavedStats() {
+  chrome.storage.local.get({ [TIME_SAVED_STORAGE_KEY]: createEmptyStats() }, (result) => {
+    renderTimeSavedStats(result?.[TIME_SAVED_STORAGE_KEY]);
+  });
+}
 
 function setOnboardingStep(step, shouldFocus = false) {
   const state = getOnboardingStepState(step);
@@ -117,6 +150,7 @@ function savePreferenceSettings() {
     autoSend: autoSendEl.checked,
     smartQuestionDetection: smartQuestionDetectionEl.checked,
     toolbarEnabled: toolbarEnabledEl.checked,
+    [TIME_SAVED_SETTING_KEY]: timeSavedTrackingEl.checked,
     siteEnabled: getSiteEnabledConfig()
   }, showSaveFeedback);
 }
@@ -242,7 +276,30 @@ toolbarEnabledEl.addEventListener('change', () => {
 });
 autoSendEl.addEventListener('change', savePreferenceSettings);
 smartQuestionDetectionEl.addEventListener('change', savePreferenceSettings);
+timeSavedTrackingEl.addEventListener('change', () => {
+  renderTimeSavedStats();
+  savePreferenceSettings();
+});
 siteListEl.addEventListener('change', savePreferenceSettings);
+resetTimeSavedEl.addEventListener('click', () => {
+  chrome.storage.local.set({ [TIME_SAVED_STORAGE_KEY]: createEmptyStats() }, () => {
+    renderTimeSavedStats();
+    showSaveFeedback();
+  });
+});
+
+if (chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes?.[TIME_SAVED_STORAGE_KEY]) {
+      renderTimeSavedStats(changes[TIME_SAVED_STORAGE_KEY].newValue);
+      return;
+    }
+    if (areaName === 'sync' && changes?.[TIME_SAVED_SETTING_KEY]) {
+      timeSavedTrackingEl.checked = changes[TIME_SAVED_SETTING_KEY].newValue !== false;
+      renderTimeSavedStats();
+    }
+  });
+}
 
 document.querySelectorAll('[data-demo-reply]').forEach((button) => {
   button.addEventListener('click', () => {
@@ -287,7 +344,8 @@ chrome.storage.sync.get(
     smartQuestionDetection: false,
     toolbarEnabled: true,
     siteEnabled: {},
-    onboardingCompleted: false
+    onboardingCompleted: false,
+    timeSavedTracking: true
   },
   (cfg) => {
     activeProfile = cfg.activeProfile || 'general';
@@ -305,11 +363,13 @@ chrome.storage.sync.get(
     autoSendEl.checked = cfg.autoSend;
     smartQuestionDetectionEl.checked = cfg.smartQuestionDetection === true;
     toolbarEnabledEl.checked = cfg.toolbarEnabled;
+    timeSavedTrackingEl.checked = cfg.timeSavedTracking !== false;
     renderSiteControls(cfg.siteEnabled);
     updateSiteControlsState();
     renderProfileOptions();
     updateActiveProfileUI();
     render();
+    loadTimeSavedStats();
     updateDemoSendResult();
     showOnboarding(shouldShowOnboarding(cfg.onboardingCompleted));
   }

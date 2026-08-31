@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prompticon",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Customizable quick replies and reusable prompt templates for supported AI chat websites.",
   "permissions": ["storage"],
   "incognito": "not_allowed",
@@ -31,7 +31,7 @@
         "https://www.meta.ai/*",
         "https://chat.deepseek.com/*"
       ],
-      "js": ["site-settings.js", "command-palette.js", "smart-detection.js", "profile-packs.js", "long-press.js", "template-variables.js", "content.js"],
+      "js": ["site-settings.js", "command-palette.js", "smart-detection.js", "profile-packs.js", "long-press.js", "template-variables.js", "time-saved.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     }

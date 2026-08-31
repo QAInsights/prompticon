@@ -16,6 +16,9 @@ const LONG_PRESS = typeof module !== 'undefined' && module.exports
 const TEMPLATE_VARIABLES = typeof module !== 'undefined' && module.exports
   ? require('./template-variables.js')
   : globalThis.PrompticonTemplateVariables;
+const TIME_SAVED = typeof module !== 'undefined' && module.exports
+  ? require('./time-saved.js')
+  : globalThis.PrompticonTimeSaved;
 const { DEFAULT_PROFILES } = PROFILE_PACKS;
 
 const DEFAULT_REPLIES = DEFAULT_PROFILES.general.quickReplies;
@@ -310,8 +313,24 @@ function getReplyButtonTitle(reply, config, index, hasLongPress = false) {
 
 function insertQuickReply(reply, config) {
   if (!reply || !config || !setInputText(reply.text)) return false;
+  recordTimeSaved(reply.text, config);
   if (config.autoSend) setTimeout(() => trySend(getSendButton()), 80);
   return true;
+}
+
+function recordTimeSaved(text, config) {
+  if (config?.timeSavedTracking === false) return;
+  const storage = typeof chrome !== 'undefined' ? chrome.storage?.local : null;
+  if (!storage) return;
+
+  try {
+    storage.get({ [TIME_SAVED.TIME_SAVED_STORAGE_KEY]: {} }, (result) => {
+      try {
+        const stats = TIME_SAVED.recordUsage(result?.[TIME_SAVED.TIME_SAVED_STORAGE_KEY], text);
+        storage.set({ [TIME_SAVED.TIME_SAVED_STORAGE_KEY]: stats });
+      } catch (_) {}
+    });
+  } catch (_) {}
 }
 
 function activateQuickReply(reply, config) {
@@ -686,7 +705,7 @@ function openCommandPalette(config = currentConfig) {
 function loadConfig() {
   return new Promise((res) => {
     chrome.storage.sync.get(
-      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false },
+      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true },
       (cfg) => {
         const active = cfg.activeProfile || 'general';
         const profs = cfg.profiles || DEFAULT_PROFILES;
@@ -695,6 +714,7 @@ function loadConfig() {
           quickReplies: currentReplies,
           autoSend: cfg.autoSend,
           smartQuestionDetection: cfg.smartQuestionDetection === true,
+          timeSavedTracking: cfg.timeSavedTracking !== false,
           toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled)
         });
       }
@@ -1074,6 +1094,7 @@ if (typeof module !== 'undefined' && module.exports) {
     getReplyButtonTitle,
     isBackdropClick,
     insertQuickReply,
+    recordTimeSaved,
     loadConfig,
     getSitePositionKey,
     getStoredSitePosition,
