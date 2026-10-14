@@ -112,7 +112,11 @@ test('every supported provider completes the configured quick-reply workflow', a
       global.KeyboardEvent = class KeyboardEvent { constructor(type, options) { this.type = type; Object.assign(this, options); } };
       installInputValueSetters();
 
-      assert.ok(contentScriptMatches.has(`https://${host}/*`), `${provider.name} content script is injected`);
+      const hostPrefix = `https://${host}/`;
+      assert.ok(
+        [...contentScriptMatches].some((pattern) => pattern.startsWith(hostPrefix)),
+        `${provider.name} content script is injected`
+      );
       assert.equal(content.getProvider()?.id, provider.id);
       assert.equal(content.getInputEl(), composer);
       assert.equal(content.getSendButton(), sendButton);

@@ -16,6 +16,17 @@
     Object.freeze({ id: "meta", name: "Meta AI" }),
     Object.freeze({ id: "deepseek", name: "DeepSeek" }),
     Object.freeze({ id: "copilot", name: "Copilot" }),
+    Object.freeze({ id: "devin", name: "Devin" }),
+    Object.freeze({ id: "cursor", name: "Cursor" }),
+    Object.freeze({ id: "githubcopilot", name: "GitHub Copilot" }),
+    Object.freeze({ id: "jules", name: "Jules" }),
+    Object.freeze({ id: "v0", name: "v0" }),
+    Object.freeze({ id: "bolt", name: "Bolt" }),
+    Object.freeze({ id: "lovable", name: "Lovable" }),
+    Object.freeze({ id: "replit", name: "Replit" }),
+    Object.freeze({ id: "aistudio", name: "AI Studio" }),
+    Object.freeze({ id: "groq", name: "Groq" }),
+    Object.freeze({ id: "phind", name: "Phind" }),
   ]);
 
   function normalizeSiteEnabled(siteEnabled = {}) {

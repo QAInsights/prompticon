@@ -14,6 +14,19 @@ Never type repetitive answers or multiple-choice options by hand again!
 - **[Qwen Chat](https://chat.qwen.ai)**
 - **[Meta AI](https://meta.ai)**
 - **[DeepSeek](https://chat.deepseek.com)**
+- **[Microsoft Copilot](https://copilot.microsoft.com)**
+- **[Devin](https://app.devin.ai)**
+- **[Cursor](https://cursor.com)**
+- **[GitHub Copilot](https://github.com/copilot)**
+- **[Jules](https://jules.google.com)**
+- **[v0](https://v0.dev)**
+- **[Bolt](https://bolt.new)**
+- **[Lovable](https://lovable.dev)**
+- **[Replit](https://replit.com)**
+- **[AI Studio](https://aistudio.google.com)**
+- **[Groq](https://groq.com)**
+- **[Phind](https://phind.com)**
+- **[OpenAI Platform](https://platform.openai.com)** (covered by the ChatGPT integration)
 - ...and most web chat interfaces via intelligent fallback detection.
 
 ---

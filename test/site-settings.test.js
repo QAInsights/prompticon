@@ -5,7 +5,7 @@ const content = require('../content.js');
 
 test('SUPPORTED_SITES exposes unique settings for every supported provider', () => {
   const ids = siteSettings.SUPPORTED_SITES.map((site) => site.id);
-  assert.equal(ids.length, 9);
+  assert.equal(ids.length, 20);
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(siteSettings.SUPPORTED_SITES.every((site) => site.id && site.name));
   assert.deepEqual(ids, content.PROVIDERS.map((provider) => provider.id));

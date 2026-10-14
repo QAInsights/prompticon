@@ -1,6 +1,6 @@
 {
   "name": "prompticon",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Adds customizable quick replies and reusable prompt templates to supported AI chat websites.",
   "type": "commonjs",
   "scripts": {

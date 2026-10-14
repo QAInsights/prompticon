@@ -2,10 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const content = require('../content.js');
 
-test('PROVIDERS contains all 9 target LLM providers with valid hosts and selectors', () => {
-  assert.equal(content.PROVIDERS.length, 9);
+test('PROVIDERS contains all 20 target LLM providers with valid hosts and selectors', () => {
+  assert.equal(content.PROVIDERS.length, 20);
   const providerIds = content.PROVIDERS.map(p => p.id);
-  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek', 'copilot']);
+  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek', 'copilot', 'devin', 'cursor', 'githubcopilot', 'jules', 'v0', 'bolt', 'lovable', 'replit', 'aistudio', 'groq', 'phind']);
 
   content.PROVIDERS.forEach(p => {
     assert.ok(p.hosts.length > 0, `Provider ${p.id} should have hosts`);
@@ -30,6 +30,18 @@ test('getProvider matches hostnames accurately', () => {
     { host: 'meta.ai', expected: 'meta' },
     { host: 'chat.deepseek.com', expected: 'deepseek' },
     { host: 'copilot.microsoft.com', expected: 'copilot' },
+    { host: 'app.devin.ai', expected: 'devin' },
+    { host: 'platform.openai.com', expected: 'chatgpt' },
+    { host: 'cursor.com', expected: 'cursor' },
+    { host: 'github.com', expected: 'githubcopilot' },
+    { host: 'jules.google.com', expected: 'jules' },
+    { host: 'v0.dev', expected: 'v0' },
+    { host: 'bolt.new', expected: 'bolt' },
+    { host: 'lovable.dev', expected: 'lovable' },
+    { host: 'replit.com', expected: 'replit' },
+    { host: 'aistudio.google.com', expected: 'aistudio' },
+    { host: 'groq.com', expected: 'groq' },
+    { host: 'phind.com', expected: 'phind' },
     { host: 'unknown-domain.com', expected: null }
   ];
 

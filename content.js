@@ -31,7 +31,7 @@ const PROVIDERS = [
     sendSelectors: ['button[aria-label*="Send" i]', 'button[aria-label="Send Message"]', 'button[data-testid="send-button"]', 'button[aria-label^="Send"]']
   },
   {
-    id: 'chatgpt', name: 'ChatGPT', hosts: ['chatgpt.com', 'chat.openai.com'],
+    id: 'chatgpt', name: 'ChatGPT', hosts: ['chatgpt.com', 'chat.openai.com', 'platform.openai.com'],
     inputSelectors: ['div#prompt-textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"][data-placeholder]', 'div[contenteditable="true"]', 'textarea'],
     sendSelectors: ['button[data-testid="send-button"]', 'button[aria-label="Send prompt"]', 'button[aria-label="Send message"]', 'button[aria-label^="Send"]']
   },
@@ -69,6 +69,61 @@ const PROVIDERS = [
     id: 'copilot', name: 'Copilot', hosts: ['copilot.microsoft.com'],
     inputSelectors: ['textarea#userInput', 'textarea[aria-label*="Copilot" i]', 'textarea[placeholder*="message" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
     sendSelectors: ['button[aria-label*="Submit" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]', 'button[data-testid="send-button"]']
+  },
+  {
+    id: 'devin', name: 'Devin', hosts: ['app.devin.ai'],
+    inputSelectors: ['textarea[placeholder*="Devin" i]', 'textarea[placeholder*="Ask" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]', 'button[data-testid*="send" i]', 'button[aria-label^="Send"]']
+  },
+  {
+    id: 'cursor', name: 'Cursor', hosts: ['cursor.com', 'www.cursor.com'],
+    inputSelectors: ['textarea[placeholder*="Agent" i]', 'textarea[placeholder*="Ask" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]', 'button[data-testid*="send" i]']
+  },
+  {
+    id: 'githubcopilot', name: 'GitHub Copilot', hosts: ['github.com'],
+    inputSelectors: ['textarea[placeholder*="Copilot" i]', 'textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]', 'button[aria-label*="Submit" i]']
+  },
+  {
+    id: 'jules', name: 'Jules', hosts: ['jules.google.com'],
+    inputSelectors: ['textarea[placeholder*="task" i]', 'textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'v0', name: 'v0', hosts: ['v0.dev'],
+    inputSelectors: ['textarea[placeholder*="v0" i]', 'textarea[placeholder*="Ask" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'bolt', name: 'Bolt', hosts: ['bolt.new'],
+    inputSelectors: ['textarea[placeholder*="Bolt" i]', 'textarea[placeholder*="build" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'lovable', name: 'Lovable', hosts: ['lovable.dev'],
+    inputSelectors: ['textarea[placeholder*="Lovable" i]', 'textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'replit', name: 'Replit', hosts: ['replit.com', 'www.replit.com'],
+    inputSelectors: ['textarea[placeholder*="Agent" i]', 'textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'aistudio', name: 'AI Studio', hosts: ['aistudio.google.com'],
+    inputSelectors: ['textarea[placeholder*="prompt" i]', 'textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Run" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'groq', name: 'Groq', hosts: ['groq.com', 'www.groq.com'],
+    inputSelectors: ['textarea[placeholder*="message" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'phind', name: 'Phind', hosts: ['phind.com', 'www.phind.com'],
+    inputSelectors: ['textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]', 'button[aria-label*="Ask" i]']
   }
 ];
 
