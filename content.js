@@ -23,6 +23,7 @@ const { DEFAULT_PROFILES } = PROFILE_PACKS;
 
 const DEFAULT_REPLIES = DEFAULT_PROFILES.general.quickReplies;
 const POSITION_STORAGE_KEY = 'toolbarPositions';
+const MAX_INCLUDED_DEFAULT_REPLIES = 3;
 
 const PROVIDERS = [
   {
@@ -757,14 +758,32 @@ function openCommandPalette(config = currentConfig) {
   commandPaletteInputEl.focus({ preventScroll: true });
 }
 
+function mergeDefaultReplies(replies, defaultReplies, limit = MAX_INCLUDED_DEFAULT_REPLIES) {
+  const merged = [...(replies || [])];
+  const seen = new Set(merged.map((r) => r?.text));
+  let added = 0;
+  for (const reply of defaultReplies || []) {
+    if (added >= limit) break;
+    if (seen.has(reply?.text)) continue;
+    seen.add(reply?.text);
+    merged.push(reply);
+    added += 1;
+  }
+  return merged;
+}
+
 function loadConfig() {
   return new Promise((res) => {
     chrome.storage.sync.get(
-      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true },
+      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true, includeDefaultReplies: false },
       (cfg) => {
         const active = cfg.activeProfile || 'general';
         const profs = cfg.profiles || DEFAULT_PROFILES;
-        const currentReplies = profs[active]?.quickReplies || cfg.quickReplies || DEFAULT_PROFILES.general.quickReplies;
+        const baseReplies = profs[active]?.quickReplies || cfg.quickReplies || DEFAULT_PROFILES.general.quickReplies;
+        const generalReplies = profs.general?.quickReplies || DEFAULT_PROFILES.general.quickReplies;
+        const currentReplies = cfg.includeDefaultReplies === true && active !== 'general'
+          ? mergeDefaultReplies(baseReplies, generalReplies)
+          : baseReplies;
         res({
           quickReplies: currentReplies,
           autoSend: cfg.autoSend,
@@ -1126,6 +1145,8 @@ if (typeof module !== 'undefined' && module.exports) {
     DEFAULT_PROFILES,
     addQuickReplyInteraction,
     DEFAULT_REPLIES,
+    MAX_INCLUDED_DEFAULT_REPLIES,
+    mergeDefaultReplies,
     PROVIDERS,
     getProvider,
     isToolbarEnabledForSite,

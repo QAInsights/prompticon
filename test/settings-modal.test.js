@@ -105,3 +105,13 @@ test('reply and preference updates save immediately and show confirmation', () =
   assert.match(popupScript, /function queueQuickReplySave\(\)/);
   assert.match(popupScript, /saveToastEl\.showPopover\(\)/);
 });
+
+test('default replies inclusion is a settings toggle wired to storage', () => {
+  const popupHtml = fs.readFileSync(path.join(root, 'popup.html'), 'utf8');
+  const popupScript = fs.readFileSync(path.join(root, 'popup.js'), 'utf8');
+
+  assert.match(popupHtml, /Include default replies/);
+  assert.match(popupHtml, /id="includeDefaultReplies"/);
+  assert.match(popupScript, /includeDefaultRepliesEl\.addEventListener\('change', savePreferenceSettings\)/);
+  assert.match(popupScript, /includeDefaultReplies: includeDefaultRepliesEl\.checked/);
+});
