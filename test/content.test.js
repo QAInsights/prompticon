@@ -550,3 +550,107 @@ test('resetPosition clears custom coordinates without errors', () => {
   content.resetPosition();
   assert.ok(true, 'resetPosition should execute cleanly');
 });
+
+test('mergeDefaultReplies appends up to 3 defaults after the profile replies', () => {
+  const developer = content.DEFAULT_PROFILES.developer.quickReplies;
+  const general = content.DEFAULT_PROFILES.general.quickReplies;
+
+  const merged = content.mergeDefaultReplies(developer, general);
+
+  assert.equal(merged.length, developer.length + 3);
+  assert.deepEqual(merged.slice(0, developer.length), developer);
+  assert.deepEqual(merged.slice(developer.length), general.slice(0, 3));
+  assert.equal(content.MAX_INCLUDED_DEFAULT_REPLIES, 3);
+});
+
+test('mergeDefaultReplies skips replies the profile already has', () => {
+  const general = content.DEFAULT_PROFILES.general.quickReplies;
+  const replies = [
+    { emoji: '💻', label: 'Debug', text: 'Debug this' },
+    { emoji: '👍', label: 'Yes', text: 'Yes' }
+  ];
+
+  const merged = content.mergeDefaultReplies(replies, general);
+  const texts = merged.map((r) => r.text);
+
+  assert.deepEqual(texts, ['Debug this', 'Yes', 'No', 'Continue', 'Can you go into more detail?']);
+  assert.equal(merged.filter((r) => r.text === 'Yes').length, 1);
+});
+
+test('loadConfig appends General defaults to a non-General profile when enabled', async () => {
+  const origChrome = global.chrome;
+  global.chrome = {
+    storage: {
+      sync: {
+        get: (defaults, cb) => {
+          cb({
+            activeProfile: 'developer',
+            profiles: content.DEFAULT_PROFILES,
+            autoSend: false,
+            toolbarEnabled: true,
+            includeDefaultReplies: true
+          });
+        }
+      }
+    }
+  };
+
+  const cfg = await content.loadConfig();
+  const developer = content.DEFAULT_PROFILES.developer.quickReplies;
+  const general = content.DEFAULT_PROFILES.general.quickReplies;
+
+  assert.equal(cfg.quickReplies.length, developer.length + 3);
+  assert.equal(cfg.quickReplies[0].label, 'Debug');
+  assert.deepEqual(
+    cfg.quickReplies.slice(developer.length).map((r) => r.label),
+    general.slice(0, 3).map((r) => r.label)
+  );
+
+  global.chrome = origChrome;
+});
+
+test('loadConfig leaves the General profile unchanged when defaults inclusion is enabled', async () => {
+  const origChrome = global.chrome;
+  global.chrome = {
+    storage: {
+      sync: {
+        get: (defaults, cb) => {
+          cb({
+            activeProfile: 'general',
+            profiles: content.DEFAULT_PROFILES,
+            includeDefaultReplies: true,
+            toolbarEnabled: true
+          });
+        }
+      }
+    }
+  };
+
+  const cfg = await content.loadConfig();
+  assert.equal(cfg.quickReplies.length, content.DEFAULT_PROFILES.general.quickReplies.length);
+
+  global.chrome = origChrome;
+});
+
+test('loadConfig keeps profiles standalone when defaults inclusion is off', async () => {
+  const origChrome = global.chrome;
+  global.chrome = {
+    storage: {
+      sync: {
+        get: (defaults, cb) => {
+          cb({
+            activeProfile: 'developer',
+            profiles: content.DEFAULT_PROFILES,
+            includeDefaultReplies: false,
+            toolbarEnabled: true
+          });
+        }
+      }
+    }
+  };
+
+  const cfg = await content.loadConfig();
+  assert.equal(cfg.quickReplies.length, content.DEFAULT_PROFILES.developer.quickReplies.length);
+
+  global.chrome = origChrome;
+});

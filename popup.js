@@ -12,6 +12,7 @@ const {
 const listEl = document.getElementById('list');
 const addBtn = document.getElementById('add');
 const autoSendEl = document.getElementById('autoSend');
+const includeDefaultRepliesEl = document.getElementById('includeDefaultReplies');
 const smartQuestionDetectionEl = document.getElementById('smartQuestionDetection');
 const toolbarEnabledEl = document.getElementById('toolbarEnabled');
 const timeSavedTrackingEl = document.getElementById('timeSavedTracking');
@@ -153,6 +154,7 @@ function updateSiteControlsState() {
 function savePreferenceSettings() {
   chrome.storage.sync.set({
     autoSend: autoSendEl.checked,
+    includeDefaultReplies: includeDefaultRepliesEl.checked,
     smartQuestionDetection: smartQuestionDetectionEl.checked,
     toolbarEnabled: toolbarEnabledEl.checked,
     [TIME_SAVED_SETTING_KEY]: timeSavedTrackingEl.checked,
@@ -280,6 +282,7 @@ toolbarEnabledEl.addEventListener('change', () => {
   savePreferenceSettings();
 });
 autoSendEl.addEventListener('change', savePreferenceSettings);
+includeDefaultRepliesEl.addEventListener('change', savePreferenceSettings);
 smartQuestionDetectionEl.addEventListener('change', savePreferenceSettings);
 timeSavedTrackingEl.addEventListener('change', () => {
   renderTimeSavedStats();
@@ -346,6 +349,7 @@ chrome.storage.sync.get(
     profiles: DEFAULT_PROFILES,
     quickReplies: null,
     autoSend: false,
+    includeDefaultReplies: false,
     smartQuestionDetection: false,
     toolbarEnabled: true,
     siteEnabled: {},
@@ -366,6 +370,7 @@ chrome.storage.sync.get(
     }
 
     autoSendEl.checked = cfg.autoSend;
+    includeDefaultRepliesEl.checked = cfg.includeDefaultReplies === true;
     smartQuestionDetectionEl.checked = cfg.smartQuestionDetection === true;
     toolbarEnabledEl.checked = cfg.toolbarEnabled;
     timeSavedTrackingEl.checked = cfg.timeSavedTracking !== false;
