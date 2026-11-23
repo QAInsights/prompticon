@@ -881,6 +881,7 @@ function setupIdleFade(bar, config) {
   if (!bar || config?.toolbarFadeEnabled !== true) return;
   const delayMs = normalizeFadeDelay(config.toolbarFadeSeconds) * 1000;
   let fadeTimer = null;
+  let fadeObserver = null;
 
   const clearFadeTimer = () => {
     if (fadeTimer !== null) {
@@ -897,7 +898,11 @@ function setupIdleFade(bar, config) {
     if (!bar.classList.contains('cqr-visible')) return;
     fadeTimer = setTimeout(() => {
       fadeTimer = null;
-      if (!bar.isConnected || commandPaletteEl?.open || templateDialogEl?.open) return;
+      if (!bar.isConnected) {
+        fadeObserver?.disconnect();
+        return;
+      }
+      if (commandPaletteEl?.open || templateDialogEl?.open) return;
       if (bar.classList.contains('cqr-dragging') || bar.matches(':hover') || bar.contains(document.activeElement)) {
         arm();
         return;
@@ -919,9 +924,9 @@ function setupIdleFade(bar, config) {
   // rather than the call sites: only a real transition re-arms the timer.
   if (typeof MutationObserver !== 'undefined') {
     let wasVisible = bar.classList.contains('cqr-visible');
-    const observer = new MutationObserver(() => {
+    fadeObserver = new MutationObserver(() => {
       if (!bar.isConnected) {
-        observer.disconnect();
+        fadeObserver.disconnect();
         clearFadeTimer();
         return;
       }
@@ -931,7 +936,7 @@ function setupIdleFade(bar, config) {
       if (isVisible) arm();
       else wake();
     });
-    observer.observe(bar, { attributes: true, attributeFilter: ['class'] });
+    fadeObserver.observe(bar, { attributes: true, attributeFilter: ['class'] });
   }
 }
 

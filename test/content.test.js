@@ -467,12 +467,14 @@ test('setupIdleFade dims after the delay, re-arms on visibility transitions, and
     content.setupIdleFade(bar, { toolbarFadeEnabled: true, toolbarFadeSeconds: 1 });
     const observer = observers[0];
 
-    // Repeated syncs that leave the class unchanged must not move the deadline.
+    // A same-state notification mid-countdown must not move the deadline:
+    // the fade still lands about 1s after the toolbar first appeared,
+    // not 1s after the latest notification.
     classes.add('cqr-visible');
     observer.callback();
+    await sleep(600);
     observer.callback();
-    observer.callback();
-    await sleep(1200);
+    await sleep(600);
     assert.ok(classes.has('cqr-faded'));
 
     // Hiding then showing the toolbar starts a fresh countdown.
@@ -481,16 +483,22 @@ test('setupIdleFade dims after the delay, re-arms on visibility transitions, and
     assert.ok(!classes.has('cqr-faded'));
     classes.add('cqr-visible');
     observer.callback();
-    await sleep(1200);
+    await sleep(300);
+    assert.ok(!classes.has('cqr-faded'));
+    await sleep(900);
     assert.ok(classes.has('cqr-faded'));
 
     // Pointer entry wakes the toolbar immediately.
     bar.listeners.pointerenter();
     assert.ok(!classes.has('cqr-faded'));
 
-    // A detached toolbar is released by the observer.
+    // A pending timer on a detached toolbar releases the observer without
+    // fading: detachment is not a class change, so the timer is the check
+    // that actually runs in production.
+    bar.listeners.pointerleave();
     bar.isConnected = false;
-    observer.callback();
+    await sleep(1200);
+    assert.ok(!classes.has('cqr-faded'));
     assert.ok(observer.disconnected);
   } finally {
     global.MutationObserver = originalMutationObserver;
