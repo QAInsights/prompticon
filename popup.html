@@ -767,6 +767,36 @@
     opacity: 0.6;
   }
 
+  .fade-delay-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+
+  .fade-delay-input {
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 11.5px;
+    padding: 4px 5px;
+    text-align: center;
+    width: 42px;
+  }
+
+  .fade-delay-input:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+    outline: none;
+  }
+
+  .fade-delay-input:disabled {
+    opacity: 0.5;
+  }
+
   .visually-hidden {
     position: absolute !important;
     clip-path: inset(50%) !important;
@@ -978,6 +1008,28 @@
         <input type="checkbox" id="toolbarEnabled" aria-label="Show quick replies toolbar on chat pages" />
         <span class="slider"></span>
       </label>
+    </div>
+
+    <div class="toggle-container">
+      <div class="toggle-copy">
+        <span class="toggle-title">Fade toolbar when idle</span>
+        <span class="toggle-hint">Dim the toolbar so you can read the text behind it.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toolbarFadeEnabled" aria-label="Dim the toolbar after a period of no interaction" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-container" id="fadeDelayRow">
+      <div class="toggle-copy">
+        <span class="toggle-title">Fade after</span>
+        <span class="toggle-hint">Seconds without interaction before the toolbar dims (1-60).</span>
+      </div>
+      <span class="fade-delay-field">
+        <input type="number" id="toolbarFadeSeconds" class="fade-delay-input" min="1" max="60" step="1" value="3" aria-label="Seconds before the toolbar fades" />
+        <span class="fade-delay-unit">sec</span>
+      </span>
     </div>
 
     <div class="toggle-container">

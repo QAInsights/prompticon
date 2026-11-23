@@ -24,6 +24,7 @@ const { DEFAULT_PROFILES } = PROFILE_PACKS;
 const DEFAULT_REPLIES = DEFAULT_PROFILES.general.quickReplies;
 const POSITION_STORAGE_KEY = 'toolbarPositions';
 const MAX_INCLUDED_DEFAULT_REPLIES = 3;
+const DEFAULT_FADE_DELAY_SECONDS = 3;
 
 const PROVIDERS = [
   {
@@ -498,6 +499,7 @@ function applyNativeStyles() {
 
 let panelEl = null, currentInputEl = null, currentConfig = null, isToolbarCollapsed = false;
 let customPosition = null, isDragging = false;
+let armIdleFade = null;
 let commandPaletteEl = null, commandPaletteInputEl = null, commandPaletteResultsEl = null;
 let commandPaletteConfig = null, commandPaletteResults = [], commandPaletteActiveIndex = 0;
 let smartReplies = [];
@@ -578,6 +580,7 @@ function createTemplateVariableDialog() {
     templateReply = null;
     templateConfig = null;
     templateVariableNames = [];
+    armIdleFade?.();
   });
   dialog.append(header, copy, form);
   document.body.appendChild(dialog);
@@ -737,6 +740,7 @@ function createCommandPalette() {
     commandPaletteConfig = null;
     commandPaletteResults = [];
     commandPaletteActiveIndex = 0;
+    armIdleFade?.();
   });
   dialog.append(header, label, input, results);
   document.body.appendChild(dialog);
@@ -775,7 +779,7 @@ function mergeDefaultReplies(replies, defaultReplies, limit = MAX_INCLUDED_DEFAU
 function loadConfig() {
   return new Promise((res) => {
     chrome.storage.sync.get(
-      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true, includeDefaultReplies: false },
+      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true, includeDefaultReplies: false, toolbarFadeEnabled: true, toolbarFadeSeconds: DEFAULT_FADE_DELAY_SECONDS },
       (cfg) => {
         const active = cfg.activeProfile || 'general';
         const profs = cfg.profiles || DEFAULT_PROFILES;
@@ -789,7 +793,9 @@ function loadConfig() {
           autoSend: cfg.autoSend,
           smartQuestionDetection: cfg.smartQuestionDetection === true,
           timeSavedTracking: cfg.timeSavedTracking !== false,
-          toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled)
+          toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled),
+          toolbarFadeEnabled: cfg.toolbarFadeEnabled !== false,
+          toolbarFadeSeconds: normalizeFadeDelay(cfg.toolbarFadeSeconds)
         });
       }
     );
@@ -862,6 +868,61 @@ async function clearToolbarPosition() {
   return new Promise((resolve) => {
     storage.set({ [POSITION_STORAGE_KEY]: nextPositions }, () => resolve(true));
   });
+}
+
+function normalizeFadeDelay(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 1) return DEFAULT_FADE_DELAY_SECONDS;
+  return Math.min(Math.round(seconds), 60);
+}
+
+function setupIdleFade(bar, config) {
+  armIdleFade = null;
+  if (!bar || config?.toolbarFadeEnabled !== true) return;
+  const delayMs = normalizeFadeDelay(config.toolbarFadeSeconds) * 1000;
+  let fadeTimer = null;
+
+  const clearFadeTimer = () => {
+    if (fadeTimer !== null) {
+      clearTimeout(fadeTimer);
+      fadeTimer = null;
+    }
+  };
+  const wake = () => {
+    clearFadeTimer();
+    bar.classList.remove('cqr-faded');
+  };
+  const arm = () => {
+    clearFadeTimer();
+    if (!bar.classList.contains('cqr-visible')) return;
+    fadeTimer = setTimeout(() => {
+      fadeTimer = null;
+      if (commandPaletteEl?.open || templateDialogEl?.open) return;
+      if (bar.classList.contains('cqr-dragging') || bar.matches(':hover') || bar.contains(document.activeElement)) {
+        arm();
+        return;
+      }
+      bar.classList.add('cqr-faded');
+    }, delayMs);
+  };
+  armIdleFade = arm;
+
+  bar.addEventListener('pointerenter', wake);
+  bar.addEventListener('pointerdown', wake);
+  bar.addEventListener('focusin', wake);
+  bar.addEventListener('pointerleave', arm);
+  bar.addEventListener('focusout', () => {
+    if (!bar.contains(document.activeElement)) arm();
+  });
+
+  // cqr-visible is re-added on every sync, so watch the class attribute
+  // rather than the call sites: only a real transition re-arms the timer.
+  if (typeof MutationObserver !== 'undefined') {
+    new MutationObserver(() => {
+      if (bar.classList.contains('cqr-visible')) arm();
+      else wake();
+    }).observe(bar, { attributes: true, attributeFilter: ['class'] });
+  }
 }
 
 function setupDraggable(el) {
@@ -1023,6 +1084,7 @@ function buildToolbar(config) {
   });
   bar.appendChild(resetBtn);
   setupDraggable(bar);
+  setupIdleFade(bar, config);
 
   return bar;
 }
@@ -1179,6 +1241,9 @@ if (typeof module !== 'undefined' && module.exports) {
     clearToolbarPosition,
     buildToolbar,
     setupDraggable,
+    setupIdleFade,
+    normalizeFadeDelay,
+    DEFAULT_FADE_DELAY_SECONDS,
     resetPosition,
     getPanelLeft,
     initPanel

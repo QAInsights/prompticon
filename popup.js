@@ -15,6 +15,9 @@ const autoSendEl = document.getElementById('autoSend');
 const includeDefaultRepliesEl = document.getElementById('includeDefaultReplies');
 const smartQuestionDetectionEl = document.getElementById('smartQuestionDetection');
 const toolbarEnabledEl = document.getElementById('toolbarEnabled');
+const toolbarFadeEnabledEl = document.getElementById('toolbarFadeEnabled');
+const toolbarFadeSecondsEl = document.getElementById('toolbarFadeSeconds');
+const fadeDelayRowEl = document.getElementById('fadeDelayRow');
 const timeSavedTrackingEl = document.getElementById('timeSavedTracking');
 const siteSettingsEl = document.getElementById('siteSettings');
 const siteListEl = document.getElementById('siteList');
@@ -151,12 +154,28 @@ function updateSiteControlsState() {
   siteSettingsEl.classList.toggle('site-settings-disabled', disabled);
 }
 
+const DEFAULT_FADE_SECONDS = 3;
+
+function getFadeSecondsValue() {
+  const seconds = Number(toolbarFadeSecondsEl.value);
+  if (!Number.isFinite(seconds) || seconds < 1) return DEFAULT_FADE_SECONDS;
+  return Math.min(Math.round(seconds), 60);
+}
+
+function updateFadeControlsState() {
+  const disabled = !toolbarEnabledEl.checked || !toolbarFadeEnabledEl.checked;
+  toolbarFadeSecondsEl.disabled = disabled;
+  fadeDelayRowEl.classList.toggle('site-settings-disabled', disabled);
+}
+
 function savePreferenceSettings() {
   chrome.storage.sync.set({
     autoSend: autoSendEl.checked,
     includeDefaultReplies: includeDefaultRepliesEl.checked,
     smartQuestionDetection: smartQuestionDetectionEl.checked,
     toolbarEnabled: toolbarEnabledEl.checked,
+    toolbarFadeEnabled: toolbarFadeEnabledEl.checked,
+    toolbarFadeSeconds: getFadeSecondsValue(),
     [TIME_SAVED_SETTING_KEY]: timeSavedTrackingEl.checked,
     siteEnabled: getSiteEnabledConfig()
   }, showSaveFeedback);
@@ -279,6 +298,15 @@ settingsButtonEl.addEventListener('click', () => preferencesDialogEl.showModal()
 closePreferencesButtonEl.addEventListener('click', () => preferencesDialogEl.close());
 toolbarEnabledEl.addEventListener('change', () => {
   updateSiteControlsState();
+  updateFadeControlsState();
+  savePreferenceSettings();
+});
+toolbarFadeEnabledEl.addEventListener('change', () => {
+  updateFadeControlsState();
+  savePreferenceSettings();
+});
+toolbarFadeSecondsEl.addEventListener('change', () => {
+  toolbarFadeSecondsEl.value = getFadeSecondsValue();
   savePreferenceSettings();
 });
 autoSendEl.addEventListener('change', savePreferenceSettings);
@@ -352,6 +380,8 @@ chrome.storage.sync.get(
     includeDefaultReplies: false,
     smartQuestionDetection: false,
     toolbarEnabled: true,
+    toolbarFadeEnabled: true,
+    toolbarFadeSeconds: DEFAULT_FADE_SECONDS,
     siteEnabled: {},
     onboardingCompleted: false,
     timeSavedTracking: true
@@ -373,9 +403,14 @@ chrome.storage.sync.get(
     includeDefaultRepliesEl.checked = cfg.includeDefaultReplies === true;
     smartQuestionDetectionEl.checked = cfg.smartQuestionDetection === true;
     toolbarEnabledEl.checked = cfg.toolbarEnabled;
+    toolbarFadeEnabledEl.checked = cfg.toolbarFadeEnabled !== false;
+    toolbarFadeSecondsEl.value = Number.isFinite(Number(cfg.toolbarFadeSeconds)) && Number(cfg.toolbarFadeSeconds) >= 1
+      ? Math.min(Math.round(Number(cfg.toolbarFadeSeconds)), 60)
+      : DEFAULT_FADE_SECONDS;
     timeSavedTrackingEl.checked = cfg.timeSavedTracking !== false;
     renderSiteControls(cfg.siteEnabled);
     updateSiteControlsState();
+    updateFadeControlsState();
     renderProfileOptions();
     updateActiveProfileUI();
     render();

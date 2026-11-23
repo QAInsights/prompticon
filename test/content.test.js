@@ -411,6 +411,32 @@ test('loadConfig retrieves configuration from chrome.storage.sync', async () => 
   global.chrome = origChrome;
 });
 
+test('loadConfig exposes idle fade settings with defaults', async () => {
+  const origChrome = global.chrome;
+  global.chrome = {
+    storage: {
+      sync: {
+        get: (defaults, cb) => cb({ ...defaults, toolbarFadeSeconds: 10 })
+      }
+    }
+  };
+
+  const cfg = await content.loadConfig();
+  assert.equal(cfg.toolbarFadeEnabled, true);
+  assert.equal(cfg.toolbarFadeSeconds, 10);
+
+  global.chrome = origChrome;
+});
+
+test('normalizeFadeDelay clamps the fade timeout to 1-60 seconds', () => {
+  assert.equal(content.normalizeFadeDelay(0), 3);
+  assert.equal(content.normalizeFadeDelay(-5), 3);
+  assert.equal(content.normalizeFadeDelay('abc'), 3);
+  assert.equal(content.normalizeFadeDelay(1), 1);
+  assert.equal(content.normalizeFadeDelay(45.6), 46);
+  assert.equal(content.normalizeFadeDelay(120), 60);
+});
+
 test('recordTimeSaved writes local stats only when tracking is enabled', () => {
   const originalChrome = global.chrome;
   let stored = {};
