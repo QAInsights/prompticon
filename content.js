@@ -897,7 +897,7 @@ function setupIdleFade(bar, config) {
     if (!bar.classList.contains('cqr-visible')) return;
     fadeTimer = setTimeout(() => {
       fadeTimer = null;
-      if (commandPaletteEl?.open || templateDialogEl?.open) return;
+      if (!bar.isConnected || commandPaletteEl?.open || templateDialogEl?.open) return;
       if (bar.classList.contains('cqr-dragging') || bar.matches(':hover') || bar.contains(document.activeElement)) {
         arm();
         return;
@@ -918,10 +918,20 @@ function setupIdleFade(bar, config) {
   // cqr-visible is re-added on every sync, so watch the class attribute
   // rather than the call sites: only a real transition re-arms the timer.
   if (typeof MutationObserver !== 'undefined') {
-    new MutationObserver(() => {
-      if (bar.classList.contains('cqr-visible')) arm();
+    let wasVisible = bar.classList.contains('cqr-visible');
+    const observer = new MutationObserver(() => {
+      if (!bar.isConnected) {
+        observer.disconnect();
+        clearFadeTimer();
+        return;
+      }
+      const isVisible = bar.classList.contains('cqr-visible');
+      if (isVisible === wasVisible) return;
+      wasVisible = isVisible;
+      if (isVisible) arm();
       else wake();
-    }).observe(bar, { attributes: true, attributeFilter: ['class'] });
+    });
+    observer.observe(bar, { attributes: true, attributeFilter: ['class'] });
   }
 }
 
