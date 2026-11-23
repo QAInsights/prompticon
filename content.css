@@ -39,6 +39,10 @@
   transform: translateY(0) scale(1);
 }
 
+.cqr-toolbar.cqr-visible.cqr-faded {
+  opacity: 0.35;
+}
+
 .cqr-btn {
   display: inline-flex !important;
   align-items: center !important;

@@ -411,6 +411,101 @@ test('loadConfig retrieves configuration from chrome.storage.sync', async () => 
   global.chrome = origChrome;
 });
 
+test('loadConfig exposes idle fade settings with defaults', async () => {
+  const origChrome = global.chrome;
+  global.chrome = {
+    storage: {
+      sync: {
+        get: (defaults, cb) => cb({ ...defaults, toolbarFadeSeconds: 10 })
+      }
+    }
+  };
+
+  const cfg = await content.loadConfig();
+  assert.equal(cfg.toolbarFadeEnabled, true);
+  assert.equal(cfg.toolbarFadeSeconds, 10);
+
+  global.chrome = origChrome;
+});
+
+test('normalizeFadeDelay clamps the fade timeout to 1-60 seconds', () => {
+  assert.equal(content.normalizeFadeDelay(0), 3);
+  assert.equal(content.normalizeFadeDelay(-5), 3);
+  assert.equal(content.normalizeFadeDelay('abc'), 3);
+  assert.equal(content.normalizeFadeDelay(1), 1);
+  assert.equal(content.normalizeFadeDelay(45.6), 46);
+  assert.equal(content.normalizeFadeDelay(120), 60);
+});
+
+test('setupIdleFade dims after the delay, re-arms on visibility transitions, and wakes on pointer entry', async () => {
+  const originalMutationObserver = global.MutationObserver;
+  const originalDocument = global.document;
+  const observers = [];
+  global.MutationObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe() {}
+    disconnect() { this.disconnected = true; }
+  };
+  global.document = { activeElement: null };
+
+  const classes = new Set(['cqr-toolbar']);
+  const bar = {
+    listeners: {},
+    isConnected: true,
+    classList: {
+      add: (cls) => classes.add(cls),
+      remove: (cls) => classes.delete(cls),
+      contains: (cls) => classes.has(cls)
+    },
+    matches: () => false,
+    contains: () => false,
+    addEventListener: (event, handler) => { bar.listeners[event] = handler; }
+  };
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  try {
+    content.setupIdleFade(bar, { toolbarFadeEnabled: true, toolbarFadeSeconds: 1 });
+    const observer = observers[0];
+
+    // A same-state notification mid-countdown must not move the deadline:
+    // the fade still lands about 1s after the toolbar first appeared,
+    // not 1s after the latest notification.
+    classes.add('cqr-visible');
+    observer.callback();
+    await sleep(600);
+    observer.callback();
+    await sleep(600);
+    assert.ok(classes.has('cqr-faded'));
+
+    // Hiding then showing the toolbar starts a fresh countdown.
+    classes.delete('cqr-visible');
+    observer.callback();
+    assert.ok(!classes.has('cqr-faded'));
+    classes.add('cqr-visible');
+    observer.callback();
+    await sleep(300);
+    assert.ok(!classes.has('cqr-faded'));
+    await sleep(900);
+    assert.ok(classes.has('cqr-faded'));
+
+    // Pointer entry wakes the toolbar immediately.
+    bar.listeners.pointerenter();
+    assert.ok(!classes.has('cqr-faded'));
+
+    // A pending timer on a detached toolbar releases the observer without
+    // fading: detachment is not a class change, so the timer is the check
+    // that actually runs in production.
+    bar.listeners.pointerleave();
+    bar.isConnected = false;
+    await sleep(1200);
+    assert.ok(!classes.has('cqr-faded'));
+    assert.ok(observer.disconnected);
+  } finally {
+    global.MutationObserver = originalMutationObserver;
+    global.document = originalDocument;
+  }
+});
+
 test('recordTimeSaved writes local stats only when tracking is enabled', () => {
   const originalChrome = global.chrome;
   let stored = {};

@@ -37,6 +37,7 @@ Never type repetitive answers or multiple-choice options by hand again!
 - **One-Click Reset (`↺`)**: Snap the toolbar right back to its default position above the composer anytime.
 - **Collapsible (`✕` / `💬 Quick Replies`)**: Minimize the toolbar into a compact pill on the left when you want minimal distraction.
 - **Visibility Control**: Hide the toolbar globally or choose exactly which supported websites should display it.
+- **Idle Fade**: The toolbar dims to 35% opacity after a few seconds without interaction, like iPhone AssistiveTouch, so you can read the text behind it. It brightens again on hover, and you can turn it off or set the delay (1-60 seconds) in Settings.
 - **Multiple Profiles**: Switch between General, Developer, Writer, Student, Support, Recruiter, Sales, and Quiz reply packs, then tailor each pack to your workflow.
 - **Default Replies Everywhere**: Optionally pin your first 3 General replies (Yes, No, Continue) to the end of every profile, so the basics are always one click away.
 - **Curated Profile Packs**: Start with tailored quick replies for developers, writers, students, support teams, recruiters, and sales conversations.
