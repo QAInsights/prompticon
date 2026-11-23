@@ -548,10 +548,11 @@ function createTemplateVariableDialog() {
   dialog.setAttribute('aria-labelledby', 'cqr-template-title');
   // Manual light-dismiss instead of closedby="any": native light dismiss also fires on
   // the click trailing a mouseup activation (e.g. a long-press reply), which would
-  // flash this dialog open and immediately closed in one gesture.
+  // flash this dialog open and immediately closed in one gesture. Dismiss on
+  // pointerdown so a press that starts inside the dialog cannot close it.
   dialog.setAttribute('closedby', 'closerequest');
-  dialog.addEventListener('click', (event) => {
-    if (isBackdropClick(event, dialog)) closeTemplateVariableDialog();
+  dialog.addEventListener('pointerdown', (event) => {
+    if (isTrustedUserEvent(event) && isBackdropClick(event, dialog)) closeTemplateVariableDialog();
   });
 
   const header = document.createElement('header');
@@ -685,8 +686,8 @@ function createCommandPalette() {
   dialog.setAttribute('aria-labelledby', 'cqr-command-title');
   // See the light-dismiss note in createTemplateVariableDialog.
   dialog.setAttribute('closedby', 'closerequest');
-  dialog.addEventListener('click', (event) => {
-    if (isBackdropClick(event, dialog)) closeCommandPalette();
+  dialog.addEventListener('pointerdown', (event) => {
+    if (isTrustedUserEvent(event) && isBackdropClick(event, dialog)) closeCommandPalette();
   });
 
   const header = document.createElement('header');

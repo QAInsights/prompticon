@@ -297,14 +297,20 @@ test('template dialog ignores the click trailing the gesture that opened it', ()
     assert.equal(dialogEl.open, true);
 
     // Native closedby="any" would light-dismiss on any outside click, including the
-    // click that trails a mouseup activation. Manual dismissal keeps it open.
+    // click that trails a mouseup activation. No click handler is registered, so the
+    // trailing click is inert.
     assert.notEqual(dialogEl.attributes.closedby, 'any');
-    listeners['dialog:click']({ target: {}, clientX: 5, clientY: 5 });
-    assert.equal(dialogEl.open, true, 'trailing click on the toolbar did not close the dialog');
+    assert.equal(listeners['dialog:click'], undefined, 'a trailing click cannot close the dialog');
 
-    // A genuine backdrop click (target is the dialog, coords outside its box) still closes.
-    listeners['dialog:click']({ target: dialogEl, clientX: 5, clientY: 5 });
-    assert.equal(dialogEl.open, false, 'backdrop click closed the dialog');
+    // A press that starts inside the dialog (target is a field, or coords inside the
+    // dialog box) must not dismiss it — releasing on the backdrop keeps edits.
+    listeners['dialog:pointerdown']({ isTrusted: true, target: {}, clientX: 5, clientY: 5 });
+    listeners['dialog:pointerdown']({ isTrusted: true, target: dialogEl, clientX: 150, clientY: 150 });
+    assert.equal(dialogEl.open, true, 'presses starting inside the dialog did not close it');
+
+    // A genuine backdrop press (target is the dialog, coords outside its box) closes.
+    listeners['dialog:pointerdown']({ isTrusted: true, target: dialogEl, clientX: 5, clientY: 5 });
+    assert.equal(dialogEl.open, false, 'backdrop press closed the dialog');
   } finally {
     global.document = origDoc;
   }
