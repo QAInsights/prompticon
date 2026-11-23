@@ -255,6 +255,67 @@ test('command palette backdrop detection only dismisses clicks outside its conte
   assert.equal(content.isBackdropClick({ target: {}, clientX: 80, clientY: 180 }, dialog), false);
 });
 
+test('template dialog ignores the click trailing the gesture that opened it', () => {
+  const origDoc = global.document;
+  let dialogEl = null;
+  const listeners = {};
+  const makeEl = (tag) => {
+    const el = {
+      tagName: tag.toUpperCase(),
+      className: '',
+      children: [],
+      attributes: {},
+      elements: {},
+      open: false,
+      setAttribute(name, value) { el.attributes[name] = value; },
+      addEventListener(evt, handler) { listeners[`${tag}:${evt}`] = handler; },
+      append(...nodes) { el.children.push(...nodes); },
+      appendChild(child) { el.children.push(child); },
+      replaceChildren() { el.children = []; },
+      focus() {},
+      showModal() { el.open = true; },
+      close() { el.open = false; listeners[`${tag}:close`]?.(); },
+      getBoundingClientRect() { return { left: 100, right: 300, top: 120, bottom: 320 }; }
+    };
+    return el;
+  };
+  global.document = {
+    querySelectorAll: () => [],
+    createElement: (tag) => {
+      const el = makeEl(tag);
+      if (tag === 'dialog') dialogEl = el;
+      if (tag === 'form') el.elements = { name: { focus() {} } };
+      return el;
+    },
+    body: { appendChild: () => {} }
+  };
+
+  try {
+    const reply = { label: 'Greet', text: 'Hello {{name}}' };
+    assert.equal(content.activateQuickReply(reply, { autoSend: false }), true);
+    assert.ok(dialogEl, 'template dialog was created');
+    assert.equal(dialogEl.open, true);
+
+    // Native closedby="any" would light-dismiss on any outside click, including the
+    // click that trails a mouseup activation. No click handler is registered, so the
+    // trailing click is inert.
+    assert.notEqual(dialogEl.attributes.closedby, 'any');
+    assert.equal(listeners['dialog:click'], undefined, 'a trailing click cannot close the dialog');
+
+    // A press that starts inside the dialog (target is a field, or coords inside the
+    // dialog box) must not dismiss it — releasing on the backdrop keeps edits.
+    listeners['dialog:pointerdown']({ isTrusted: true, target: {}, clientX: 5, clientY: 5 });
+    listeners['dialog:pointerdown']({ isTrusted: true, target: dialogEl, clientX: 150, clientY: 150 });
+    assert.equal(dialogEl.open, true, 'presses starting inside the dialog did not close it');
+
+    // A genuine backdrop press (target is the dialog, coords outside its box) closes.
+    listeners['dialog:pointerdown']({ isTrusted: true, target: dialogEl, clientX: 5, clientY: 5 });
+    assert.equal(dialogEl.open, false, 'backdrop press closed the dialog');
+  } finally {
+    global.document = origDoc;
+  }
+});
+
 test('toolbar positions are persisted independently for each provider', async () => {
   const originalChrome = global.chrome;
   const originalLocation = global.location;
