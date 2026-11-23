@@ -546,12 +546,13 @@ function createTemplateVariableDialog() {
   const dialog = document.createElement('dialog');
   dialog.className = 'cqr-template-dialog';
   dialog.setAttribute('aria-labelledby', 'cqr-template-title');
-  dialog.setAttribute('closedby', 'any');
-  if (!supportsDialogLightDismiss()) {
-    dialog.addEventListener('click', (event) => {
-      if (isBackdropClick(event, dialog)) closeTemplateVariableDialog();
-    });
-  }
+  // Manual light-dismiss instead of closedby="any": native light dismiss also fires on
+  // the click trailing a mouseup activation (e.g. a long-press reply), which would
+  // flash this dialog open and immediately closed in one gesture.
+  dialog.setAttribute('closedby', 'closerequest');
+  dialog.addEventListener('click', (event) => {
+    if (isBackdropClick(event, dialog)) closeTemplateVariableDialog();
+  });
 
   const header = document.createElement('header');
   header.className = 'cqr-template-header';
@@ -639,10 +640,6 @@ function openTemplateVariableDialog(reply, config, variables) {
   return true;
 }
 
-function supportsDialogLightDismiss() {
-  return typeof HTMLDialogElement !== 'undefined' && 'closedBy' in HTMLDialogElement.prototype;
-}
-
 function isBackdropClick(event, dialog) {
   if (!event || event.target !== dialog) return false;
   const rect = dialog.getBoundingClientRect();
@@ -686,12 +683,11 @@ function createCommandPalette() {
   const dialog = document.createElement('dialog');
   dialog.className = 'cqr-command-palette';
   dialog.setAttribute('aria-labelledby', 'cqr-command-title');
-  dialog.setAttribute('closedby', 'any');
-  if (!supportsDialogLightDismiss()) {
-    dialog.addEventListener('click', (event) => {
-      if (isBackdropClick(event, dialog)) closeCommandPalette();
-    });
-  }
+  // See the light-dismiss note in createTemplateVariableDialog.
+  dialog.setAttribute('closedby', 'closerequest');
+  dialog.addEventListener('click', (event) => {
+    if (isBackdropClick(event, dialog)) closeCommandPalette();
+  });
 
   const header = document.createElement('header');
   header.className = 'cqr-command-header';
