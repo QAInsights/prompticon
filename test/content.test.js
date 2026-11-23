@@ -437,6 +437,67 @@ test('normalizeFadeDelay clamps the fade timeout to 1-60 seconds', () => {
   assert.equal(content.normalizeFadeDelay(120), 60);
 });
 
+test('setupIdleFade dims after the delay, re-arms on visibility transitions, and wakes on pointer entry', async () => {
+  const originalMutationObserver = global.MutationObserver;
+  const originalDocument = global.document;
+  const observers = [];
+  global.MutationObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe() {}
+    disconnect() { this.disconnected = true; }
+  };
+  global.document = { activeElement: null };
+
+  const classes = new Set(['cqr-toolbar']);
+  const bar = {
+    listeners: {},
+    isConnected: true,
+    classList: {
+      add: (cls) => classes.add(cls),
+      remove: (cls) => classes.delete(cls),
+      contains: (cls) => classes.has(cls)
+    },
+    matches: () => false,
+    contains: () => false,
+    addEventListener: (event, handler) => { bar.listeners[event] = handler; }
+  };
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  try {
+    content.setupIdleFade(bar, { toolbarFadeEnabled: true, toolbarFadeSeconds: 1 });
+    const observer = observers[0];
+
+    // Repeated syncs that leave the class unchanged must not move the deadline.
+    classes.add('cqr-visible');
+    observer.callback();
+    observer.callback();
+    observer.callback();
+    await sleep(1200);
+    assert.ok(classes.has('cqr-faded'));
+
+    // Hiding then showing the toolbar starts a fresh countdown.
+    classes.delete('cqr-visible');
+    observer.callback();
+    assert.ok(!classes.has('cqr-faded'));
+    classes.add('cqr-visible');
+    observer.callback();
+    await sleep(1200);
+    assert.ok(classes.has('cqr-faded'));
+
+    // Pointer entry wakes the toolbar immediately.
+    bar.listeners.pointerenter();
+    assert.ok(!classes.has('cqr-faded'));
+
+    // A detached toolbar is released by the observer.
+    bar.isConnected = false;
+    observer.callback();
+    assert.ok(observer.disconnected);
+  } finally {
+    global.MutationObserver = originalMutationObserver;
+    global.document = originalDocument;
+  }
+});
+
 test('recordTimeSaved writes local stats only when tracking is enabled', () => {
   const originalChrome = global.chrome;
   let stored = {};
