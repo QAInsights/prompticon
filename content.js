@@ -1879,11 +1879,12 @@ function getPanelLeft(composerRect, inputRect, panelWidth, collapsed) {
 }
 
 function positionPanel() {
-  if (!panelEl || !currentInputEl || isDragging) return;
+  if (!panelEl || !currentInputEl) return false;
+  if (isDragging) return true;
 
   const c = getComposerContainer(currentInputEl) || currentInputEl;
   const r = c.getBoundingClientRect();
-  if (r.width <= 0 || r.bottom < 0 || r.top > window.innerHeight) { hidePanel(); return; }
+  if (r.width <= 0 || r.bottom < 0 || r.top > window.innerHeight) { hidePanel(); return false; }
 
   const maxW = Math.min(Math.round(r.width), window.innerWidth - 24);
   panelEl.style.maxWidth = maxW + 'px';
@@ -1904,7 +1905,7 @@ function positionPanel() {
       };
     panelEl.style.left = Math.round(nextPosition.left) + 'px';
     panelEl.style.top = Math.round(nextPosition.top) + 'px';
-    return;
+    return true;
   }
 
   const top = r.top - fittedH - 10;
@@ -1915,6 +1916,7 @@ function positionPanel() {
 
   panelEl.style.top = Math.round(top < 8 ? r.bottom + 10 : top) + 'px';
   panelEl.style.left = Math.round(Math.max(12, Math.min(left, window.innerWidth - fittedW - 12))) + 'px';
+  return true;
 }
 
 function schedulePositionPanel() {
@@ -1951,8 +1953,7 @@ function syncPanel() {
   updateSmartReplies();
   applyNativeStyles();
   updatePositionObserver();
-  positionPanel();
-  panelEl.classList.add('cqr-visible');
+  if (positionPanel()) panelEl.classList.add('cqr-visible');
 }
 
 async function initPanel() {
