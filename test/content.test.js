@@ -517,6 +517,8 @@ test('collapsed quick replies chip separates click expansion from dragging', asy
     winListeners.pointermove({ isTrusted: true, clientX: 120, clientY: 200 });
     assert.equal(toolbar.style.left, '120px', 'dragging the collapsed chip moves the toolbar');
     winListeners.pointerup({ isTrusted: true });
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'), 'the click released after a drag does not expand the chip');
     await new Promise((resolve) => setTimeout(resolve, 70));
     toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
     assert.ok(!toolbar.className.includes('cqr-collapsed'));
