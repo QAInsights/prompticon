@@ -574,6 +574,7 @@ function applyNativeStyles() {
 
 let panelEl = null, currentInputEl = null, currentConfig = null, isToolbarCollapsed = false;
 let customPosition = null, isDragging = false;
+let positionObserver = null, observedPositionTargets = [], repositionFrame = null;
 let armIdleFade = null;
 let profileMenuEl = null, profileMenuTriggerEl = null;
 let overflowMenuEl = null, overflowMenuTriggerEl = null;
@@ -1083,7 +1084,11 @@ function getSitePositionKey() {
 
 function normalizePosition(position) {
   if (!position || !Number.isFinite(position.left) || !Number.isFinite(position.top)) return null;
-  return { left: position.left, top: position.top };
+  const normalized = { left: position.left, top: position.top };
+  ['viewportWidth', 'viewportHeight', 'panelWidth', 'panelHeight'].forEach((key) => {
+    if (Number.isFinite(position[key])) normalized[key] = position[key];
+  });
+  return normalized;
 }
 
 function getStoredSitePosition(positions, siteKey = getSitePositionKey()) {
@@ -1212,11 +1217,37 @@ function setupIdleFade(bar, config) {
   }
 }
 
-function setupDraggable(el) {
+function clampNumber(value, min, max) {
+  if (max < min) return min;
+  return Math.max(min, Math.min(max, value));
+}
+
+function getResponsivePosition(position, panelWidth, panelHeight, viewportWidth, viewportHeight) {
+  if (!position) return null;
+  const sourceViewportWidth = Number.isFinite(position.viewportWidth) ? position.viewportWidth : viewportWidth;
+  const sourceViewportHeight = Number.isFinite(position.viewportHeight) ? position.viewportHeight : viewportHeight;
+  const sourcePanelWidth = Number.isFinite(position.panelWidth) ? position.panelWidth : panelWidth;
+  const sourcePanelHeight = Number.isFinite(position.panelHeight) ? position.panelHeight : panelHeight;
+
+  const sourceXTravel = Math.max(0, sourceViewportWidth - sourcePanelWidth - 16);
+  const sourceYTravel = Math.max(0, sourceViewportHeight - sourcePanelHeight - 16);
+  const targetXTravel = Math.max(0, viewportWidth - panelWidth - 16);
+  const targetYTravel = Math.max(0, viewportHeight - panelHeight - 16);
+  const xRatio = sourceXTravel > 0 ? clampNumber((position.left - 8) / sourceXTravel, 0, 1) : 0;
+  const yRatio = sourceYTravel > 0 ? clampNumber((position.top - 8) / sourceYTravel, 0, 1) : 0;
+
+  return {
+    left: clampNumber(8 + xRatio * targetXTravel, 8, viewportWidth - panelWidth - 8),
+    top: clampNumber(8 + yRatio * targetYTravel, 8, viewportHeight - panelHeight - 8)
+  };
+}
+
+function setupDraggable(el, handleEl = el) {
   let startX = 0, startY = 0, initLeft = 0, initTop = 0, hasMoved = false;
 
   el.addEventListener('pointerdown', (e) => {
     if (!isTrustedUserEvent(e) || e.button !== 0) return;
+    if (handleEl && e.target !== handleEl && !handleEl.contains?.(e.target)) return;
     startX = e.clientX;
     startY = e.clientY;
     hasMoved = false;
@@ -1238,8 +1269,8 @@ function setupDraggable(el) {
       const pw = el.offsetWidth || 0, ph = el.offsetHeight || 0;
       const winW = typeof window !== 'undefined' ? window.innerWidth : 1000;
       const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const newL = Math.max(8, Math.min(winW - pw - 8, initLeft + dx));
-      const newT = Math.max(8, Math.min(winH - ph - 8, initTop + dy));
+      const newL = clampNumber(initLeft + dx, 8, winW - pw - 8);
+      const newT = clampNumber(initTop + dy, 8, winH - ph - 8);
       customPosition = { left: newL, top: newT };
       el.style.left = Math.round(newL) + 'px';
       el.style.top = Math.round(newT) + 'px';
@@ -1254,7 +1285,13 @@ function setupDraggable(el) {
       }
       if (hasMoved) {
         el.classList.remove('cqr-dragging');
-        void saveToolbarPosition(customPosition);
+        void saveToolbarPosition({
+          ...customPosition,
+          viewportWidth: typeof window !== 'undefined' ? window.innerWidth : undefined,
+          viewportHeight: typeof window !== 'undefined' ? window.innerHeight : undefined,
+          panelWidth: el.offsetWidth,
+          panelHeight: el.offsetHeight
+        });
         setTimeout(() => { isDragging = false; }, 60);
       }
     };
@@ -1815,7 +1852,7 @@ function buildToolbar(config) {
     resetPosition();
   });
   bar.appendChild(resetBtn);
-  setupDraggable(bar);
+  setupDraggable(bar, handle);
   setupIdleFade(bar, config);
 
   return bar;
@@ -1836,15 +1873,6 @@ function getPanelLeft(composerRect, inputRect, panelWidth, collapsed) {
 
 function positionPanel() {
   if (!panelEl || !currentInputEl || isDragging) return;
-  const pw = panelEl.offsetWidth, ph = panelEl.offsetHeight;
-
-  if (customPosition && pw > 0) {
-    const left = Math.max(8, Math.min(window.innerWidth - pw - 8, customPosition.left));
-    const top = Math.max(8, Math.min(window.innerHeight - ph - 8, customPosition.top));
-    panelEl.style.left = Math.round(left) + 'px';
-    panelEl.style.top = Math.round(top) + 'px';
-    return;
-  }
 
   const c = getComposerContainer(currentInputEl) || currentInputEl;
   const r = c.getBoundingClientRect();
@@ -1855,8 +1883,27 @@ function positionPanel() {
   panelEl.style.width = 'max-content';
   fitToolbarToWidth(panelEl, maxW);
 
-  const fittedW = panelEl.offsetWidth || pw;
-  let top = r.top - (ph || 30) - 10;
+  const fittedW = panelEl.offsetWidth || panelEl.scrollWidth;
+  const fittedH = panelEl.offsetHeight || 30;
+
+  if (customPosition && fittedW > 0) {
+    if (!Number.isFinite(customPosition.viewportWidth) || !Number.isFinite(customPosition.panelWidth)) {
+      customPosition = {
+        ...customPosition,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        panelWidth: fittedW,
+        panelHeight: fittedH
+      };
+      void saveToolbarPosition(customPosition);
+    }
+    const responsivePosition = getResponsivePosition(customPosition, fittedW, fittedH, window.innerWidth, window.innerHeight);
+    panelEl.style.left = Math.round(responsivePosition.left) + 'px';
+    panelEl.style.top = Math.round(responsivePosition.top) + 'px';
+    return;
+  }
+
+  const top = r.top - fittedH - 10;
   // Grok's styled composer wrapper can be much wider than the editable field.
   // A collapsed toolbar should track the field itself on every provider.
   const inputRect = currentInputEl.getBoundingClientRect();
@@ -1866,12 +1913,40 @@ function positionPanel() {
   panelEl.style.left = Math.round(Math.max(12, Math.min(left, window.innerWidth - fittedW - 12))) + 'px';
 }
 
+function schedulePositionPanel() {
+  if (repositionFrame !== null || typeof window === 'undefined') return;
+  const requestFrame = typeof window.requestAnimationFrame === 'function'
+    ? window.requestAnimationFrame.bind(window)
+    : (callback) => setTimeout(callback, 16);
+  repositionFrame = requestFrame(() => {
+    repositionFrame = null;
+    positionPanel();
+  });
+}
+
+function updatePositionObserver() {
+  if (!panelEl || !currentInputEl || typeof ResizeObserver === 'undefined') return;
+  const composer = getComposerContainer(currentInputEl) || currentInputEl;
+  const targets = [...new Set([panelEl, currentInputEl, composer])];
+  const unchanged = targets.length === observedPositionTargets.length
+    && targets.every((target, index) => target === observedPositionTargets[index]);
+  if (unchanged) return;
+
+  if (!positionObserver) {
+    positionObserver = new ResizeObserver(() => schedulePositionPanel());
+  }
+  positionObserver.disconnect();
+  targets.forEach((target) => positionObserver.observe(target));
+  observedPositionTargets = targets;
+}
+
 function syncPanel() {
   if (isModalOpenOnPage()) { hidePanel(); return; }
   currentInputEl = getInputEl();
   if (!currentInputEl || !panelEl) { hidePanel(); return; }
   updateSmartReplies();
   applyNativeStyles();
+  updatePositionObserver();
   positionPanel();
   panelEl.classList.add('cqr-visible');
 }
@@ -1898,8 +1973,9 @@ async function initPanel() {
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof chrome !== 'undefined' && chrome.storage) {
-  window.addEventListener('scroll', () => { if (panelEl?.classList.contains('cqr-visible')) positionPanel(); }, true);
-  window.addEventListener('resize', () => { if (panelEl) positionPanel(); });
+  window.addEventListener('scroll', () => { if (panelEl?.classList.contains('cqr-visible')) schedulePositionPanel(); }, true);
+  window.addEventListener('resize', schedulePositionPanel);
+  window.visualViewport?.addEventListener('resize', schedulePositionPanel);
   document.addEventListener('keydown', (event) => {
     if (!isTrustedUserEvent(event)) return;
     if (commandPaletteEl?.open) return;
@@ -1990,6 +2066,7 @@ if (typeof module !== 'undefined' && module.exports) {
     switchActiveProfile,
     setupDraggable,
     setupIdleFade,
+    getResponsivePosition,
     normalizeFadeDelay,
     DEFAULT_FADE_DELAY_SECONDS,
     resetPosition,
