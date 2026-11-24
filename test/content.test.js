@@ -451,6 +451,83 @@ test('buildToolbar creates buttons for each quick reply and collapse button', ()
   assert.ok(!toolbar.className.includes('cqr-collapsed'));
 });
 
+test('collapsed quick replies chip separates click expansion from dragging', async () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const winListeners = {};
+
+  const createElement = (tag) => {
+    const el = {
+      tagName: tag.toUpperCase(),
+      className: '',
+      children: [],
+      type: '',
+      textContent: '',
+      title: '',
+      attributes: {},
+      listeners: {},
+      style: {},
+      offsetWidth: 300,
+      offsetHeight: 40,
+      setAttribute: (name, value) => { el.attributes[name] = value; },
+      classList: {
+        add: (cls) => { if (!el.className.split(/\s+/).includes(cls)) el.className = `${el.className} ${cls}`.trim(); },
+        remove: (cls) => { el.className = el.className.split(/\s+/).filter((item) => item && item !== cls).join(' '); },
+        toggle: (cls, val) => {
+          if (val) el.classList.add(cls);
+          else el.classList.remove(cls);
+        },
+        contains: (cls) => el.className.split(/\s+/).includes(cls)
+      },
+      contains: (target) => target === el || el.children.includes(target),
+      getBoundingClientRect: () => ({ left: 100, top: 200 }),
+      addEventListener: (event, handler) => { el.listeners[event] = handler; },
+      appendChild: (child) => { el.children.push(child); }
+    };
+    return el;
+  };
+
+  global.document = { createElement };
+  global.window = {
+    innerWidth: 1024,
+    innerHeight: 768,
+    addEventListener: (evt, handler) => { winListeners[evt] = handler; },
+    removeEventListener: (evt) => { delete winListeners[evt]; }
+  };
+
+  try {
+    const toolbar = content.buildToolbar({
+      quickReplies: [{ emoji: '👍', label: 'Yes', text: 'Yes' }],
+      autoSend: false
+    });
+    const toggleBtn = toolbar.children.find((child) => child.className.includes('cqr-toggle-btn'));
+
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'));
+
+    toolbar.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1, target: toggleBtn });
+    winListeners.pointerup({ isTrusted: true });
+    assert.equal(toolbar.style.left, undefined, 'a plain press does not move the collapsed chip');
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(!toolbar.className.includes('cqr-collapsed'), 'a plain click still expands the toolbar');
+
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'));
+    toolbar.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1, target: toggleBtn });
+    winListeners.pointermove({ isTrusted: true, clientX: 120, clientY: 200 });
+    assert.equal(toolbar.style.left, '120px', 'dragging the collapsed chip moves the toolbar');
+    winListeners.pointerup({ isTrusted: true });
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'), 'the click released after a drag does not expand the chip');
+    await new Promise((resolve) => setTimeout(resolve, 70));
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(!toolbar.className.includes('cqr-collapsed'));
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+  }
+});
+
 test('loadConfig retrieves configuration from chrome.storage.sync', async () => {
   const origChrome = global.chrome;
   global.chrome = {
@@ -694,7 +771,7 @@ test('setupDraggable handles pointer dragging and updates position', () => {
   assert.ok(mockEl.listeners.pointerdown, 'pointerdown listener should be registered');
 
   // Trigger pointerdown
-  mockEl.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1 });
+  mockEl.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1, target: mockEl });
   assert.ok(winListeners.pointermove, 'pointermove listener should be registered on window');
 
   // Trigger pointermove by 50px right, 30px down
@@ -708,6 +785,78 @@ test('setupDraggable handles pointer dragging and updates position', () => {
   assert.ok(!mockEl.className.includes('cqr-dragging'));
 
   global.window = origWin;
+});
+
+test('setupDraggable only starts movement from the dedicated drag handle', () => {
+  const mockEl = {
+    listeners: {},
+    className: 'cqr-toolbar',
+    style: {},
+    classList: { add: () => {}, remove: () => {} },
+    getBoundingClientRect: () => ({ left: 100, top: 200 }),
+    addEventListener: (evt, handler) => { mockEl.listeners[evt] = handler; }
+  };
+  const handle = { contains: (target) => target === handle };
+  const button = {};
+
+  const origWin = global.window;
+  const winListeners = {};
+  global.window = {
+    innerWidth: 1024,
+    innerHeight: 768,
+    addEventListener: (evt, handler) => { winListeners[evt] = handler; },
+    removeEventListener: (evt) => { delete winListeners[evt]; }
+  };
+
+  content.setupDraggable(mockEl, handle);
+  mockEl.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, target: button });
+  assert.equal(winListeners.pointermove, undefined, 'pressing a toolbar button must not arm dragging');
+
+  mockEl.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, target: handle });
+  assert.ok(winListeners.pointermove, 'pressing the drag handle arms dragging');
+
+  global.window = origWin;
+});
+
+test('getResponsivePosition preserves proportional placement across viewport sizes', () => {
+  const position = {
+    left: 250,
+    top: 380,
+    viewportWidth: 1000,
+    viewportHeight: 800,
+    panelWidth: 500,
+    panelHeight: 40
+  };
+
+  assert.deepEqual(content.getResponsivePosition(position, 400, 40, 500, 400), { left: 50, top: 180 });
+  assert.deepEqual(content.getResponsivePosition(position, 500, 40, 1000, 800), { left: 250, top: 380 });
+});
+
+test('responsive toolbar positions keep their viewport metadata in storage', async () => {
+  const originalChrome = global.chrome;
+  const originalLocation = global.location;
+  let stored = { toolbarPositions: {} };
+
+  global.location = { hostname: 'chatgpt.com' };
+  global.chrome = {
+    storage: {
+      local: {
+        get: (defaults, callback) => callback({ ...defaults, ...stored }),
+        set: (values, callback) => {
+          stored = { ...stored, ...values };
+          callback?.();
+        }
+      }
+    }
+  };
+
+  const position = { left: 320, top: 480, viewportWidth: 1280, viewportHeight: 900, panelWidth: 700, panelHeight: 38 };
+  await content.saveToolbarPosition(position);
+  assert.deepEqual(stored.toolbarPositions.chatgpt, position);
+  assert.deepEqual(await content.loadToolbarPosition(), position);
+
+  global.chrome = originalChrome;
+  global.location = originalLocation;
 });
 
 test('resetPosition clears custom coordinates without errors', () => {
