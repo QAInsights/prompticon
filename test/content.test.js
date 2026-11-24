@@ -451,6 +451,81 @@ test('buildToolbar creates buttons for each quick reply and collapse button', ()
   assert.ok(!toolbar.className.includes('cqr-collapsed'));
 });
 
+test('collapsed quick replies chip separates click expansion from dragging', async () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const winListeners = {};
+
+  const createElement = (tag) => {
+    const el = {
+      tagName: tag.toUpperCase(),
+      className: '',
+      children: [],
+      type: '',
+      textContent: '',
+      title: '',
+      attributes: {},
+      listeners: {},
+      style: {},
+      offsetWidth: 300,
+      offsetHeight: 40,
+      setAttribute: (name, value) => { el.attributes[name] = value; },
+      classList: {
+        add: (cls) => { if (!el.className.split(/\s+/).includes(cls)) el.className = `${el.className} ${cls}`.trim(); },
+        remove: (cls) => { el.className = el.className.split(/\s+/).filter((item) => item && item !== cls).join(' '); },
+        toggle: (cls, val) => {
+          if (val) el.classList.add(cls);
+          else el.classList.remove(cls);
+        },
+        contains: (cls) => el.className.split(/\s+/).includes(cls)
+      },
+      contains: (target) => target === el || el.children.includes(target),
+      getBoundingClientRect: () => ({ left: 100, top: 200 }),
+      addEventListener: (event, handler) => { el.listeners[event] = handler; },
+      appendChild: (child) => { el.children.push(child); }
+    };
+    return el;
+  };
+
+  global.document = { createElement };
+  global.window = {
+    innerWidth: 1024,
+    innerHeight: 768,
+    addEventListener: (evt, handler) => { winListeners[evt] = handler; },
+    removeEventListener: (evt) => { delete winListeners[evt]; }
+  };
+
+  try {
+    const toolbar = content.buildToolbar({
+      quickReplies: [{ emoji: '👍', label: 'Yes', text: 'Yes' }],
+      autoSend: false
+    });
+    const toggleBtn = toolbar.children.find((child) => child.className.includes('cqr-toggle-btn'));
+
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'));
+
+    toolbar.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1, target: toggleBtn });
+    winListeners.pointerup({ isTrusted: true });
+    assert.equal(toolbar.style.left, undefined, 'a plain press does not move the collapsed chip');
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(!toolbar.className.includes('cqr-collapsed'), 'a plain click still expands the toolbar');
+
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(toolbar.className.includes('cqr-collapsed'));
+    toolbar.listeners.pointerdown({ isTrusted: true, button: 0, clientX: 100, clientY: 200, pointerId: 1, target: toggleBtn });
+    winListeners.pointermove({ isTrusted: true, clientX: 120, clientY: 200 });
+    assert.equal(toolbar.style.left, '120px', 'dragging the collapsed chip moves the toolbar');
+    winListeners.pointerup({ isTrusted: true });
+    await new Promise((resolve) => setTimeout(resolve, 70));
+    toggleBtn.listeners.click({ isTrusted: true, preventDefault: () => {} });
+    assert.ok(!toolbar.className.includes('cqr-collapsed'));
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+  }
+});
+
 test('loadConfig retrieves configuration from chrome.storage.sync', async () => {
   const origChrome = global.chrome;
   global.chrome = {
