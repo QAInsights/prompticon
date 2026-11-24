@@ -1887,19 +1887,16 @@ function positionPanel() {
   const fittedH = panelEl.offsetHeight || 30;
 
   if (customPosition && fittedW > 0) {
-    if (!Number.isFinite(customPosition.viewportWidth) || !Number.isFinite(customPosition.panelWidth)) {
-      customPosition = {
-        ...customPosition,
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight,
-        panelWidth: fittedW,
-        panelHeight: fittedH
+    const hasViewportMetadata = ['viewportWidth', 'viewportHeight', 'panelWidth', 'panelHeight']
+      .every((key) => Number.isFinite(customPosition[key]));
+    const nextPosition = hasViewportMetadata
+      ? getResponsivePosition(customPosition, fittedW, fittedH, window.innerWidth, window.innerHeight)
+      : {
+        left: clampNumber(customPosition.left, 8, window.innerWidth - fittedW - 8),
+        top: clampNumber(customPosition.top, 8, window.innerHeight - fittedH - 8)
       };
-      void saveToolbarPosition(customPosition);
-    }
-    const responsivePosition = getResponsivePosition(customPosition, fittedW, fittedH, window.innerWidth, window.innerHeight);
-    panelEl.style.left = Math.round(responsivePosition.left) + 'px';
-    panelEl.style.top = Math.round(responsivePosition.top) + 'px';
+    panelEl.style.left = Math.round(nextPosition.left) + 'px';
+    panelEl.style.top = Math.round(nextPosition.top) + 'px';
     return;
   }
 
