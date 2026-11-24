@@ -2024,7 +2024,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
       closeProfileMenu();
       closeOverflowMenu();
       hideReplyPreview();
-      if (panelEl) { panelEl.remove(); panelEl = null; }
+      if (panelEl) {
+        positionObserver?.disconnect();
+        observedPositionTargets = [];
+        panelEl.remove();
+        panelEl = null;
+      }
       currentConfig = null;
       initPanel();
     });
