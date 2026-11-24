@@ -574,7 +574,7 @@ function applyNativeStyles() {
 
 let panelEl = null, currentInputEl = null, currentConfig = null, isToolbarCollapsed = false;
 let customPosition = null, isDragging = false;
-let positionObserver = null, observedPositionTargets = [], repositionFrame = null;
+let positionObserver = null, observedPositionTargets = [], repositionFrame = null, syncFrame = null;
 let armIdleFade = null;
 let profileMenuEl = null, profileMenuTriggerEl = null;
 let overflowMenuEl = null, overflowMenuTriggerEl = null;
@@ -1919,14 +1919,26 @@ function positionPanel() {
   return true;
 }
 
-function schedulePositionPanel() {
-  if (repositionFrame !== null || typeof window === 'undefined') return;
+function requestPanelFrame(callback) {
   const requestFrame = typeof window.requestAnimationFrame === 'function'
     ? window.requestAnimationFrame.bind(window)
-    : (callback) => setTimeout(callback, 16);
-  repositionFrame = requestFrame(() => {
+    : (frameCallback) => setTimeout(frameCallback, 16);
+  return requestFrame(callback);
+}
+
+function schedulePositionPanel() {
+  if (repositionFrame !== null || typeof window === 'undefined') return;
+  repositionFrame = requestPanelFrame(() => {
     repositionFrame = null;
     positionPanel();
+  });
+}
+
+function scheduleSyncPanel() {
+  if (syncFrame !== null || typeof window === 'undefined') return;
+  syncFrame = requestPanelFrame(() => {
+    syncFrame = null;
+    syncPanel();
   });
 }
 
@@ -1978,9 +1990,9 @@ async function initPanel() {
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof chrome !== 'undefined' && chrome.storage) {
-  window.addEventListener('scroll', () => { if (panelEl?.classList.contains('cqr-visible')) schedulePositionPanel(); }, true);
-  window.addEventListener('resize', schedulePositionPanel);
-  window.visualViewport?.addEventListener('resize', schedulePositionPanel);
+  window.addEventListener('scroll', () => { if (panelEl) scheduleSyncPanel(); }, true);
+  window.addEventListener('resize', scheduleSyncPanel);
+  window.visualViewport?.addEventListener('resize', scheduleSyncPanel);
   document.addEventListener('keydown', (event) => {
     if (!isTrustedUserEvent(event)) return;
     if (commandPaletteEl?.open) return;
