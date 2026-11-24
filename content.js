@@ -1998,7 +1998,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
 
   let debounceTimer = null;
   if (typeof MutationObserver !== 'undefined') {
-    new MutationObserver(() => { clearTimeout(debounceTimer); debounceTimer = setTimeout(syncPanel, 150); }).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver((mutations) => {
+      const onlyToolbarMutations = mutations.every((mutation) => (
+        panelEl && (mutation.target === panelEl || panelEl.contains(mutation.target))
+      ));
+      if (onlyToolbarMutations) return;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(syncPanel, 150);
+    }).observe(document.body, { childList: true, subtree: true });
   }
   setInterval(syncPanel, 2000);
   if (chrome.storage?.onChanged) {
