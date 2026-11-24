@@ -1990,7 +1990,11 @@ async function initPanel() {
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof chrome !== 'undefined' && chrome.storage) {
-  window.addEventListener('scroll', () => { if (panelEl) scheduleSyncPanel(); }, true);
+  window.addEventListener('scroll', () => {
+    if (!panelEl) return;
+    if (panelEl.classList.contains('cqr-visible')) schedulePositionPanel();
+    else scheduleSyncPanel();
+  }, true);
   window.addEventListener('resize', scheduleSyncPanel);
   window.visualViewport?.addEventListener('resize', scheduleSyncPanel);
   document.addEventListener('keydown', (event) => {
