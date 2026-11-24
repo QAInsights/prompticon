@@ -1247,7 +1247,10 @@ function setupDraggable(el, handleEl = el) {
 
   el.addEventListener('pointerdown', (e) => {
     if (!isTrustedUserEvent(e) || e.button !== 0) return;
-    if (handleEl && e.target !== handleEl && !handleEl.contains?.(e.target)) return;
+    const canStartDrag = typeof handleEl === 'function'
+      ? handleEl(e.target)
+      : !handleEl || e.target === handleEl || handleEl.contains?.(e.target);
+    if (!canStartDrag) return;
     startX = e.clientX;
     startY = e.clientY;
     hasMoved = false;
@@ -1852,7 +1855,11 @@ function buildToolbar(config) {
     resetPosition();
   });
   bar.appendChild(resetBtn);
-  setupDraggable(bar, handle);
+  setupDraggable(bar, (target) => (
+    target === handle
+    || handle.contains?.(target)
+    || (isToolbarCollapsed && (target === toggleBtn || toggleBtn.contains?.(target)))
+  ));
   setupIdleFade(bar, config);
 
   return bar;
