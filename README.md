@@ -26,8 +26,13 @@ Never type repetitive answers or multiple-choice options by hand again!
 - **[AI Studio](https://aistudio.google.com)**
 - **[Groq](https://groq.com)**
 - **[Phind](https://phind.com)**
+- **[Perplexity](https://perplexity.ai)**
+- **[NotebookLM](https://notebooklm.google.com)**
+- **[Poe](https://poe.com)**
+- **[LMArena](https://lmarena.ai)**
+- **[OpenRouter](https://openrouter.ai)**
+- **[Kimi](https://kimi.com)**
 - **[OpenAI Platform](https://platform.openai.com)** (covered by the ChatGPT integration)
-- ...and most web chat interfaces via intelligent fallback detection.
 
 ---
 
@@ -80,7 +85,7 @@ Create a production-ready Chrome Web Store bundle:
 npm run pack
 ```
 
-This generates `prompticon-chrome-v1.3.3.zip` ready for the [Chrome Developer Dashboard](https://chrome.google.com/webstore/devconsole).
+This generates `prompticon-chrome-v<version>.zip` ready for the [Chrome Developer Dashboard](https://chrome.google.com/webstore/devconsole).
 
 Validate and create the Firefox Add-ons bundle:
 
@@ -88,7 +93,7 @@ Validate and create the Firefox Add-ons bundle:
 npm run check:firefox
 ```
 
-This runs the complete test suite, treats Mozilla validator warnings as errors, and generates `web-ext-artifacts/prompticon-firefox-v1.3.3.zip` for the [Firefox Add-on Developer Hub](https://addons.mozilla.org/developers/). See [AMO_SUBMISSION.md](AMO_SUBMISSION.md) for the listing copy, reviewer notes, and submission checklist.
+This runs the complete test suite, treats Mozilla validator warnings as errors, and generates `web-ext-artifacts/prompticon-firefox-v<version>.zip` for the [Firefox Add-on Developer Hub](https://addons.mozilla.org/developers/). See [AMO_SUBMISSION.md](AMO_SUBMISSION.md) for the listing copy, reviewer notes, and submission checklist.
 
 ---
 

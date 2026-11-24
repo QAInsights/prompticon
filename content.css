@@ -6,7 +6,7 @@
   flex-wrap: nowrap !important;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   padding: 4px 6px !important;
   margin: 0 !important;
   max-width: calc(100vw - 24px);
@@ -47,13 +47,13 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
+  gap: 4px !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   background: rgba(255, 255, 255, 0.8) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
   border-radius: 999px !important;
-  padding: 4px 12px !important;
+  padding: 4px 9px !important;
   margin: 0 !important;
   font-size: var(--cqr-font-size, 11.5px) !important;
   font-family: var(--cqr-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
@@ -129,8 +129,118 @@
   justify-content: flex-start !important;
 }
 
-.cqr-toolbar.cqr-collapsed .cqr-reply-btn {
+.cqr-toolbar.cqr-collapsed .cqr-reply-btn,
+.cqr-toolbar.cqr-collapsed .cqr-profile-btn,
+.cqr-toolbar.cqr-collapsed .cqr-overflow-btn,
+.cqr-toolbar.cqr-collapsed .cqr-save-btn,
+.cqr-overflow-hidden {
   display: none !important;
+}
+
+.cqr-save-btn {
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  opacity: 0.78;
+}
+
+.cqr-toolbar.cqr-compact .cqr-reply-btn {
+  padding: 4px 8px !important;
+}
+
+.cqr-overflow-btn {
+  padding: 4px 8px !important;
+  font-weight: 600 !important;
+  opacity: 0.85;
+}
+
+.cqr-profile-btn {
+  padding: 4px 9px !important;
+  font-weight: 600 !important;
+}
+
+.cqr-profile-menu {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 164px !important;
+  padding: 5px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  box-sizing: border-box !important;
+}
+
+.cqr-profile-option {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 6px 9px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #0f172a !important;
+  font: inherit !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+.cqr-profile-option:hover,
+.cqr-profile-option:focus-visible {
+  background: #f0fdf4 !important;
+  border-color: rgba(22, 163, 74, 0.28) !important;
+  color: #14532d !important;
+  outline: none !important;
+}
+
+.cqr-profile-option-active {
+  background: rgba(22, 163, 74, 0.1) !important;
+  color: #15803d !important;
+  font-weight: 600 !important;
+}
+
+.cqr-profile-check {
+  color: #16a34a !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.cqr-profile-menu.cqr-dark {
+  background: rgba(24, 24, 28, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.cqr-profile-menu.cqr-dark .cqr-profile-option {
+  color: #f1f5f9 !important;
+}
+
+.cqr-profile-menu.cqr-dark .cqr-profile-option:hover,
+.cqr-profile-menu.cqr-dark .cqr-profile-option:focus-visible {
+  background: rgba(22, 163, 74, 0.2) !important;
+  border-color: rgba(134, 239, 172, 0.35) !important;
+  color: #dcfce7 !important;
+}
+
+.cqr-profile-menu.cqr-dark .cqr-profile-option-active {
+  background: rgba(22, 163, 74, 0.24) !important;
+  color: #86efac !important;
+}
+
+.cqr-profile-menu.cqr-dark .cqr-profile-check {
+  color: #86efac !important;
 }
 
 .cqr-reset-btn {
@@ -171,7 +281,8 @@
 }
 
 .cqr-command-palette,
-.cqr-template-dialog {
+.cqr-template-dialog,
+.cqr-save-dialog {
   background: #ffffff !important;
   border: 1px solid rgba(15, 23, 42, 0.14) !important;
   border-radius: 12px !important;
@@ -186,7 +297,8 @@
 }
 
 .cqr-command-palette::backdrop,
-.cqr-template-dialog::backdrop {
+.cqr-template-dialog::backdrop,
+.cqr-save-dialog::backdrop {
   background: rgba(15, 23, 42, 0.32) !important;
 }
 
@@ -254,6 +366,8 @@
   display: grid !important;
   gap: 4px !important;
   margin-top: 9px !important;
+  max-height: 280px !important;
+  overflow-y: auto !important;
 }
 
 .cqr-command-result {
@@ -264,12 +378,31 @@
   color: #1e293b !important;
   cursor: pointer !important;
   display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
   font: inherit !important;
   font-size: 12px !important;
   line-height: 1.35 !important;
   padding: 8px 9px !important;
   text-align: left !important;
   width: 100% !important;
+}
+
+.cqr-command-result-label {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.cqr-command-profile {
+  flex-shrink: 0 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 999px !important;
+  padding: 2px 7px !important;
 }
 
 .cqr-command-result:hover,
@@ -314,7 +447,8 @@
   font-weight: 700 !important;
 }
 
-.cqr-template-field input {
+.cqr-template-field input,
+.cqr-template-field textarea {
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 7px !important;
@@ -328,7 +462,19 @@
   width: 100% !important;
 }
 
-.cqr-template-field input:focus-visible {
+.cqr-template-field textarea {
+  min-height: 76px !important;
+  resize: vertical !important;
+}
+
+.cqr-save-row {
+  display: grid !important;
+  grid-template-columns: 72px 1fr !important;
+  gap: 8px !important;
+}
+
+.cqr-template-field input:focus-visible,
+.cqr-template-field textarea:focus-visible {
   border-color: #16a34a !important;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
   outline: none !important;

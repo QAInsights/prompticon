@@ -30,3 +30,22 @@ test('command palette keyboard navigation wraps in both directions', () => {
   assert.equal(palette.getNextActiveIndex(0, 3, -1), 2);
   assert.equal(palette.getNextActiveIndex(0, 0, 1), -1);
 });
+
+test('collectAllProfileReplies places active profile first and tags replies with profile metadata', () => {
+  const profiles = {
+    general: { icon: '🌐', name: 'General', quickReplies: [{ emoji: '👍', label: 'Yes', text: 'Yes' }] },
+    developer: { icon: '💻', name: 'Developer', quickReplies: [{ emoji: '🐛', label: 'Debug', text: 'Debug this' }] },
+    custom: { icon: '🚀', name: 'Launch', quickReplies: [{ emoji: '📣', label: 'Tweet', text: 'Write a tweet' }] }
+  };
+
+  const all = palette.collectAllProfileReplies(profiles, ['general', 'developer'], 'developer');
+  assert.equal(all.length, 3);
+  assert.equal(all[0].label, 'Debug');
+  assert.equal(all[0]._profileId, 'developer');
+  assert.equal(all[1].label, 'Yes');
+  assert.equal(all[2].label, 'Tweet');
+
+  const byProfileName = palette.filterQuickReplies(all, 'launch');
+  assert.equal(byProfileName.length, 1);
+  assert.equal(byProfileName[0].label, 'Tweet');
+});

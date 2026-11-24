@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prompticon",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Customizable quick replies and reusable prompt templates for supported AI chat websites.",
   "permissions": ["storage"],
   "incognito": "not_allowed",
@@ -45,7 +45,17 @@
         "https://www.groq.com/*",
         "https://phind.com/*",
         "https://www.phind.com/*",
-        "https://platform.openai.com/*"
+        "https://platform.openai.com/*",
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://notebooklm.google.com/*",
+        "https://poe.com/*",
+        "https://www.poe.com/*",
+        "https://lmarena.ai/*",
+        "https://chat.lmsys.org/*",
+        "https://openrouter.ai/*",
+        "https://kimi.com/*",
+        "https://www.kimi.com/*"
       ],
       "js": ["site-settings.js", "command-palette.js", "smart-detection.js", "profile-packs.js", "long-press.js", "template-variables.js", "time-saved.js", "content.js"],
       "css": ["content.css"],

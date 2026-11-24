@@ -215,14 +215,197 @@
     margin: 2px 0 0;
   }
 
+  .time-saved-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .time-saved-actions[hidden] {
+    display: none;
+  }
+
+  .mini-action-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 7px;
+    white-space: nowrap;
+  }
+
+  .mini-action-btn:hover,
+  .mini-action-btn:focus-visible {
+    background: rgba(169, 255, 104, 0.24);
+    border-color: rgba(22, 163, 74, 0.42);
+    color: var(--accent-dark);
+    outline: none;
+  }
+
+  .review-nudge {
+    align-items: center;
+    background: #f0fdf4;
+    border: 1px solid rgba(22, 163, 74, 0.25);
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 7px 9px;
+  }
+
+  .review-nudge[hidden] {
+    display: none;
+  }
+
+  .review-nudge-copy {
+    color: #14532d;
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .review-nudge-actions {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .review-nudge-cta {
+    background: var(--accent-dark);
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .review-nudge-cta:hover {
+    background: #166534;
+  }
+
+  .review-nudge-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+
+  .review-nudge-dismiss:hover {
+    color: var(--text-primary);
+  }
+
   .profile-label {
     font-size: 9.5px;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.6px;
-    margin-bottom: 4px;
+    margin-bottom: 0;
     display: block;
+  }
+
+  .profile-header-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    gap: 6px;
+  }
+
+  .profile-pack-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pack-danger-btn {
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.28);
+  }
+
+  .pack-danger-btn:hover,
+  .pack-danger-btn:focus-visible {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #b91c1c;
+  }
+
+  .pack-section {
+    display: grid;
+    gap: 9px;
+  }
+
+  .pack-section[hidden] {
+    display: none;
+  }
+
+  .pack-copy {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .pack-field-row {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 7px;
+  }
+
+  .pack-input,
+  .pack-textarea {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 11.5px;
+    padding: 7px 8px;
+    width: 100%;
+  }
+
+  .pack-textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    min-height: 92px;
+    resize: vertical;
+  }
+
+  .pack-input:focus-visible,
+  .pack-textarea:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+    outline: none;
+  }
+
+  .pack-error {
+    color: #dc2626;
+    font-size: 10.5px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .pack-error[hidden] {
+    display: none;
+  }
+
+  .pack-dialog-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
   }
 
   .profile-select {
@@ -296,8 +479,16 @@
     border-radius: 12px;
     box-shadow: 0 18px 46px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.08);
     color: var(--text-primary);
-    padding: 14px;
-    width: min(392px, calc(100% - 28px));
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    padding: 11px 12px;
+    scrollbar-width: none;
+    width: min(396px, calc(100% - 20px));
+  }
+
+  .preferences-dialog::-webkit-scrollbar {
+    display: none;
+    width: 0;
   }
 
   .preferences-dialog:not([open]) {
@@ -312,7 +503,7 @@
     align-items: center;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 7px;
   }
 
   .preferences-header h2 {
@@ -322,7 +513,8 @@
   }
 
   .preferences-dialog .toggle-container {
-    margin: 0 0 6px;
+    margin: 0 0 5px;
+    padding: 5px 9px;
   }
 
   .preferences-dialog .site-settings {
@@ -679,6 +871,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     background: var(--card-bg);
     padding: 6px 10px;
     border-radius: 7px;
@@ -690,6 +883,8 @@
   .toggle-copy {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
     gap: 1px;
   }
 
@@ -812,6 +1007,7 @@
   .switch {
     position: relative;
     display: inline-block;
+    flex: 0 0 auto;
     width: 34px;
     height: 18px;
   }
@@ -867,6 +1063,63 @@
   .save-toast.is-visible {
     transform: translateY(0);
   }
+
+  #resetTimeSaved {
+    margin-bottom: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --input-bg: #0f172a;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --accent-glow: rgba(34, 197, 94, 0.35);
+      --border-color: #334155;
+      --tab-bg: #1e293b;
+    }
+
+    .title-group h1 {
+      background: linear-gradient(135deg, #f8fafc 0%, #86efac 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      background: rgba(34, 197, 94, 0.18);
+      color: #86efac;
+      border-color: rgba(134, 239, 172, 0.35);
+    }
+
+    .donate-trigger {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(251, 191, 36, 0.35);
+      color: #fcd34d;
+    }
+
+    .onboarding {
+      background: #0f172a;
+    }
+
+    .review-nudge {
+      background: rgba(22, 163, 74, 0.16);
+      border-color: rgba(134, 239, 172, 0.28);
+    }
+
+    .review-nudge-copy {
+      color: #dcfce7;
+    }
+
+    .time-saved-value {
+      color: #86efac;
+    }
+  }
 </style>
 </head>
 <body>
@@ -874,7 +1127,7 @@
     <div class="title-group">
       <img src="assets/prompticon.png" class="logo-icon" alt="Prompticon Logo" />
       <h1>Prompticon</h1>
-      <span class="badge" id="versionBadge">v1.4.0</span>
+      <span class="badge" id="versionBadge">v1.7.0</span>
     </div>
     <div class="header-actions">
       <a class="header-icon-link donate-trigger ext-link" href="https://buymeacoffee.com/qainsights" target="_blank" aria-label="Support Prompticon on Buy Me a Coffee">
@@ -1012,6 +1265,17 @@
 
     <div class="toggle-container">
       <div class="toggle-copy">
+        <span class="toggle-title">Compact toolbar (emoji only)</span>
+        <span class="toggle-hint">Show only icons on the floating bar to save space. Hover to see labels.</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="compactToolbar" aria-label="Show only emoji icons on the floating toolbar" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-container">
+      <div class="toggle-copy">
         <span class="toggle-title">Fade toolbar when idle</span>
         <span class="toggle-hint">Dim the toolbar so you can read the text behind it.</span>
       </div>
@@ -1043,7 +1307,10 @@
       </label>
     </div>
 
-    <button id="resetTimeSaved" class="btn action-secondary" type="button">↺ Reset time saved</button>
+    <div class="actions-row" style="margin-top: 0; margin-bottom: 6px;">
+      <button id="resetTimeSaved" class="btn action-secondary" type="button" style="margin-bottom: 0;">↺ Reset time saved</button>
+      <button id="openWelcomeBtn" class="btn action-secondary" type="button">✨ Quick setup</button>
+    </div>
 
     <details class="site-settings" id="siteSettings">
       <summary>
@@ -1056,6 +1323,48 @@
     </details>
   </dialog>
 
+  <dialog class="preferences-dialog" id="packDialog" aria-labelledby="packDialogTitle">
+    <header class="preferences-header">
+      <h2 id="packDialogTitle">Prompt Pack</h2>
+      <button class="modal-close" id="closePackDialog" type="button" aria-label="Close pack dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18"></path>
+        </svg>
+      </button>
+    </header>
+
+    <form class="pack-section" id="packCreateForm" hidden>
+      <p class="pack-copy">Create a custom profile pack for your own workflow.</p>
+      <div class="pack-field-row">
+        <input class="pack-input" id="newPackIcon" type="text" value="🚀" aria-label="Pack icon" placeholder="Icon" />
+        <input class="pack-input" id="newPackName" type="text" required maxlength="40" aria-label="Pack name" placeholder="e.g. Code Review, SEO, Study" />
+      </div>
+      <div class="pack-dialog-actions">
+        <button class="btn action-primary" type="submit">Create pack</button>
+      </div>
+    </form>
+
+    <div class="pack-section" id="packShareSection" hidden>
+      <p class="pack-copy" id="packShareCopy">Share this code anywhere (X, Slack, Reddit, email). Others can paste it in Import.</p>
+      <textarea class="pack-textarea" id="packShareCode" readonly aria-label="Shareable pack code"></textarea>
+      <div class="pack-dialog-actions">
+        <button class="btn action-secondary" id="downloadPackJsonBtn" type="button">Download .json</button>
+        <button class="btn action-primary" id="copyPackCodeBtn" type="button">Copy share code</button>
+      </div>
+    </div>
+
+    <form class="pack-section" id="packImportForm" hidden>
+      <p class="pack-copy">Paste a <code>PROMPTICON1:...</code> share code, full share message, or JSON pack.</p>
+      <textarea class="pack-textarea" id="packImportInput" required aria-label="Pack code or JSON to import" placeholder="PROMPTICON1:... or { &quot;name&quot;: ... }"></textarea>
+      <p class="pack-error" id="packImportError" hidden role="alert"></p>
+      <input id="packImportFileInput" type="file" accept=".json,application/json" hidden />
+      <div class="pack-dialog-actions">
+        <button class="btn action-secondary" id="loadPackFileBtn" type="button">Load .json</button>
+        <button class="btn action-primary" type="submit">Import pack</button>
+      </div>
+    </form>
+  </dialog>
+
   <main id="settingsContent">
   <section class="time-saved-card" id="timeSavedCard" hidden>
     <div class="time-saved-copy" aria-live="polite">
@@ -1063,14 +1372,33 @@
       <p class="time-saved-value" id="timeSavedValue">0s</p>
       <p class="time-saved-detail" id="timeSavedDetail">No quick replies used yet.</p>
     </div>
+    <div class="time-saved-actions" id="timeSavedActions" hidden>
+      <button id="copyStatsBtn" class="mini-action-btn" type="button" title="Copy stats summary to share">Copy</button>
+      <button id="downloadStatsCardBtn" class="mini-action-btn" type="button" title="Download shareable PNG stats card">Share card</button>
+    </div>
+  </section>
+  <section class="review-nudge" id="reviewNudge" hidden aria-label="Rate Prompticon">
+    <p class="review-nudge-copy" id="reviewNudgeCopy">Enjoying Prompticon?</p>
+    <div class="review-nudge-actions">
+      <a class="review-nudge-cta" id="reviewLink" href="#" target="_blank" rel="noopener">⭐ Rate</a>
+      <button class="review-nudge-dismiss" id="dismissReviewBtn" type="button" aria-label="Dismiss review reminder" title="Dismiss">×</button>
+    </div>
   </section>
   <div class="profile-section">
-    <label class="profile-label" for="profileSelect">Select profile</label>
+    <div class="profile-header-row">
+      <label class="profile-label" for="profileSelect">Select profile</label>
+      <div class="profile-pack-actions">
+        <button id="newPackBtn" class="mini-action-btn" type="button" title="Create a new custom profile pack">+ New</button>
+        <button id="sharePackBtn" class="mini-action-btn" type="button" title="Share or export the active profile pack">Share</button>
+        <button id="importPackBtn" class="mini-action-btn" type="button" title="Import a shared pack code or JSON file">Import</button>
+        <button id="deletePackBtn" class="mini-action-btn pack-danger-btn" type="button" title="Delete this custom profile" hidden>Delete</button>
+      </div>
+    </div>
     <select class="profile-select" id="profileSelect" name="profile"></select>
   </div>
 
   <div id="list" class="list-container"></div>
-  <p class="shortcut-hint">Use <kbd>Alt</kbd> + <kbd>1</kbd>–<kbd>9</kbd> for replies · <kbd>{{topic}}</kbd> asks for a value.</p>
+  <p class="shortcut-hint">Use <kbd>Alt</kbd> + <kbd>1</kbd>–<kbd>9</kbd> · <kbd>{{topic}}</kbd> prompts for input · <kbd>{{selection}}</kbd> uses highlighted text.</p>
 
   <div class="actions-row">
     <button id="add" class="btn action-primary" type="button">+ Add quick reply</button>
@@ -1090,6 +1418,8 @@
   <script src="profile-packs.js"></script>
   <script src="onboarding.js"></script>
   <script src="time-saved.js"></script>
+  <script src="share-stats.js"></script>
+  <script src="pack-sharing.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

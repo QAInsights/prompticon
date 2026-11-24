@@ -27,6 +27,12 @@
     Object.freeze({ id: "aistudio", name: "AI Studio" }),
     Object.freeze({ id: "groq", name: "Groq" }),
     Object.freeze({ id: "phind", name: "Phind" }),
+    Object.freeze({ id: "perplexity", name: "Perplexity" }),
+    Object.freeze({ id: "notebooklm", name: "NotebookLM" }),
+    Object.freeze({ id: "poe", name: "Poe" }),
+    Object.freeze({ id: "lmarena", name: "LMArena" }),
+    Object.freeze({ id: "openrouter", name: "OpenRouter" }),
+    Object.freeze({ id: "kimi", name: "Kimi" }),
   ]);
 
   function normalizeSiteEnabled(siteEnabled = {}) {

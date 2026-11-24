@@ -30,22 +30,26 @@ const PROVIDERS = [
   {
     id: 'claude', name: 'Claude', hosts: ['claude.ai', 'www.claude.ai'],
     inputSelectors: ['div[contenteditable="true"].ProseMirror', 'fieldset div[contenteditable="true"]', 'div[contenteditable="true"][aria-label*="Claude" i]', 'div[contenteditable="true"][data-placeholder*="Claude" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
-    sendSelectors: ['button[aria-label*="Send" i]', 'button[aria-label="Send Message"]', 'button[data-testid="send-button"]', 'button[aria-label^="Send"]']
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[aria-label="Send Message"]', 'button[data-testid="send-button"]', 'button[aria-label^="Send"]'],
+    assistantSelectors: ['[data-testid="assistant-message"]', '.font-claude-response', '.font-claude-message', '[data-is-streaming]']
   },
   {
     id: 'chatgpt', name: 'ChatGPT', hosts: ['chatgpt.com', 'chat.openai.com', 'platform.openai.com'],
     inputSelectors: ['div#prompt-textarea', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"][data-placeholder]', 'div[contenteditable="true"]', 'textarea'],
-    sendSelectors: ['button[data-testid="send-button"]', 'button[aria-label="Send prompt"]', 'button[aria-label="Send message"]', 'button[aria-label^="Send"]']
+    sendSelectors: ['button[data-testid="send-button"]', 'button[aria-label="Send prompt"]', 'button[aria-label="Send message"]', 'button[aria-label^="Send"]'],
+    assistantSelectors: ['[data-message-author-role="assistant"]']
   },
   {
     id: 'gemini', name: 'Gemini', hosts: ['gemini.google.com'],
     inputSelectors: ['div[role="textbox"][aria-label*="prompt" i]', 'div.ql-editor.textarea', 'rich-textarea div[contenteditable="true"]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]'],
-    sendSelectors: ['button[aria-label="Send message"]', 'button[aria-label="Send Message"]', 'button[aria-label="Submit"]', 'button[aria-label^="Send"]']
+    sendSelectors: ['button[aria-label="Send message"]', 'button[aria-label="Send Message"]', 'button[aria-label="Submit"]', 'button[aria-label^="Send"]'],
+    assistantSelectors: ['model-response', 'message-content', '.model-response-text']
   },
   {
     id: 'grok', name: 'Grok', hosts: ['grok.com', 'www.grok.com'],
     inputSelectors: ['textarea[aria-label*="Grok" i]', 'div[data-testid="chat-input"] div[contenteditable="true"]', 'div[data-testid="chat-input"]', 'div[contenteditable="true"]', 'textarea[placeholder*="Ask anything" i]', 'textarea'],
-    sendSelectors: ['button[data-testid="send-button"]', 'button[aria-label="Submit"]', 'button[aria-label="Send"]', 'button[aria-label^="Send"]']
+    sendSelectors: ['button[data-testid="send-button"]', 'button[aria-label="Submit"]', 'button[aria-label="Send"]', 'button[aria-label^="Send"]'],
+    assistantSelectors: ['[data-testid*="assistant" i]', '.message-bubble', '[class*="response-content" i]']
   },
   {
     id: 'mistral', name: 'Mistral Le Chat', hosts: ['chat.mistral.ai'],
@@ -126,6 +130,38 @@ const PROVIDERS = [
     id: 'phind', name: 'Phind', hosts: ['phind.com', 'www.phind.com'],
     inputSelectors: ['textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"]'],
     sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]', 'button[aria-label*="Ask" i]']
+  },
+  {
+    id: 'perplexity', name: 'Perplexity', hosts: ['perplexity.ai', 'www.perplexity.ai'],
+    inputSelectors: ['div#ask-input[contenteditable="true"]', 'textarea[placeholder*="Ask" i]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[aria-label*="Submit" i]', 'button[aria-label*="Send" i]', 'button[data-testid="submit-button"]', 'button[type="submit"]'],
+    assistantSelectors: ['[data-testid="answer"]', '.prose', '[class*="markdown" i]']
+  },
+  {
+    id: 'notebooklm', name: 'NotebookLM', hosts: ['notebooklm.google.com'],
+    inputSelectors: ['textarea[aria-label*="query" i]', 'textarea[placeholder*="Start typing" i]', 'textarea[placeholder*="Ask" i]', 'textarea', 'div[contenteditable="true"][role="textbox"]'],
+    sendSelectors: ['button[aria-label*="Submit" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]'],
+    assistantSelectors: ['.to-user-container', '[class*="response" i]']
+  },
+  {
+    id: 'poe', name: 'Poe', hosts: ['poe.com', 'www.poe.com'],
+    inputSelectors: ['textarea[class*="GrowingTextArea" i]', 'textarea[placeholder*="Talk" i]', 'textarea[placeholder*="Message" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[class*="SendButton" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'lmarena', name: 'LMArena', hosts: ['lmarena.ai', 'chat.lmsys.org'],
+    inputSelectors: ['textarea[placeholder*="Ask" i]', 'textarea[placeholder*="Enter" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[type="submit"]', 'button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]']
+  },
+  {
+    id: 'openrouter', name: 'OpenRouter', hosts: ['openrouter.ai'],
+    inputSelectors: ['textarea[placeholder*="Start" i]', 'textarea[placeholder*="message" i]', 'textarea', 'div[contenteditable="true"]'],
+    sendSelectors: ['button[aria-label*="Send" i]', 'button[type="submit"]']
+  },
+  {
+    id: 'kimi', name: 'Kimi', hosts: ['kimi.com', 'www.kimi.com'],
+    inputSelectors: ['div.chat-input-editor[contenteditable="true"]', 'div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]', 'textarea'],
+    sendSelectors: ['button[class*="send" i]', 'button[aria-label*="Send" i]', 'button[type="submit"]']
   }
 ];
 
@@ -200,11 +236,16 @@ function isModalOpenOnPage() {
 function getLatestAssistantResponseText() {
   if (typeof document === 'undefined') return '';
 
-  for (const selector of ASSISTANT_MESSAGE_SELECTORS) {
+  const provider = getProvider();
+  const selectors = provider?.assistantSelectors?.length
+    ? [...provider.assistantSelectors, ...ASSISTANT_MESSAGE_SELECTORS]
+    : ASSISTANT_MESSAGE_SELECTORS;
+
+  for (const selector of selectors) {
     const candidates = Array.from(document.querySelectorAll?.(selector) || []);
     for (let index = candidates.length - 1; index >= 0; index -= 1) {
       const candidate = candidates[index];
-      if (candidate.closest?.('.cqr-toolbar, .cqr-command-palette, .cqr-template-dialog') || !isVisible(candidate)) continue;
+      if (candidate.closest?.('.cqr-toolbar, .cqr-command-palette, .cqr-template-dialog, .cqr-save-dialog') || !isVisible(candidate)) continue;
       const text = (candidate.innerText || candidate.textContent || '').trim();
       if (text) return text;
     }
@@ -265,6 +306,25 @@ function getSendButton() {
   }) || null;
 }
 
+function getInputText() {
+  const el = getInputEl();
+  if (!el) return '';
+  const tag = (el.tagName || '').toLowerCase();
+  if (tag === 'textarea' || tag === 'input') return String(el.value || '').trim();
+  return String(el.innerText || el.textContent || '').trim();
+}
+
+function getPageContext() {
+  let selection = '';
+  try {
+    selection = typeof window !== 'undefined' ? String(window.getSelection?.()?.toString?.() || '').trim() : '';
+  } catch (_) {}
+  const pageTitle = typeof document !== 'undefined' && typeof document.title === 'string'
+    ? document.title.trim()
+    : '';
+  return { selection, pageTitle };
+}
+
 function setInputText(text) {
   const el = getInputEl();
   if (!el) return false;
@@ -292,18 +352,31 @@ function setInputText(text) {
     sel.addRange(range);
   } catch (_) {}
 
+  const beforeText = el.textContent || '';
+  let beforeInputHandled = false;
+
   try {
-    targetNode.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertText', data: text }));
+    const beforeEvt = new InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertText', data: text });
+    const notCanceled = targetNode.dispatchEvent(beforeEvt);
+    const afterBeforeInputText = el.textContent || '';
+    beforeInputHandled = !notCanceled
+      || beforeEvt.defaultPrevented === true
+      || (afterBeforeInputText !== beforeText && afterBeforeInputText.includes(text));
   } catch (_) {}
 
-  const inserted = document.execCommand('insertText', false, text);
+  if (!beforeInputHandled) {
+    const inserted = document.execCommand('insertText', false, text);
+    const compact = (value) => String(value || '').replace(/\s+/g, '');
+    const afterExecText = el.textContent || '';
+    const didInsert = inserted && (afterExecText !== beforeText || compact(afterExecText).includes(compact(text)));
 
-  if (!inserted || !el.textContent.includes(text)) {
-    targetNode.textContent = text;
+    if (!didInsert) {
+      targetNode.textContent = text;
+    }
   }
 
   try {
-    targetNode.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+    targetNode.dispatchEvent(new Event('input', { bubbles: true }));
   } catch (_) {}
 
   return true;
@@ -391,9 +464,11 @@ function recordTimeSaved(text, config) {
 }
 
 function activateQuickReply(reply, config) {
-  const variables = TEMPLATE_VARIABLES.getTemplateVariables(reply?.text);
-  if (!variables.length) return insertQuickReply(reply, config);
-  return openTemplateVariableDialog(reply, config, variables);
+  if (!reply || !config) return false;
+  const { remaining, partiallyRendered } = TEMPLATE_VARIABLES.resolveBuiltinValues(reply.text, getPageContext());
+  const resolvedReply = partiallyRendered === reply.text ? reply : { ...reply, text: partiallyRendered };
+  if (!remaining.length) return insertQuickReply(resolvedReply, config);
+  return openTemplateVariableDialog(resolvedReply, config, remaining);
 }
 
 function addQuickReplyInteraction(button, reply, config) {
@@ -500,11 +575,16 @@ function applyNativeStyles() {
 let panelEl = null, currentInputEl = null, currentConfig = null, isToolbarCollapsed = false;
 let customPosition = null, isDragging = false;
 let armIdleFade = null;
+let profileMenuEl = null, profileMenuTriggerEl = null;
+let overflowMenuEl = null, overflowMenuTriggerEl = null;
+let previewHostEl = null, previewTimer = null;
 let commandPaletteEl = null, commandPaletteInputEl = null, commandPaletteResultsEl = null;
 let commandPaletteConfig = null, commandPaletteResults = [], commandPaletteActiveIndex = 0;
 let smartReplies = [];
 let templateDialogEl = null, templateFormEl = null, templateTitleEl = null;
 let templateReply = null, templateConfig = null, templateVariableNames = [];
+let saveDialogEl = null, saveFormEl = null, saveSubtitleEl = null;
+let saveConfig = null;
 
 function haveSameReplies(left, right) {
   return left.length === right.length && left.every((reply, index) => (
@@ -540,6 +620,170 @@ function selectCommandPaletteReply(reply) {
 
 function closeTemplateVariableDialog() {
   if (templateDialogEl?.open) templateDialogEl.close();
+}
+
+function closeSavePromptDialog() {
+  if (saveDialogEl?.open) saveDialogEl.close();
+}
+
+function suggestReplyLabel(text) {
+  const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  const words = cleaned.split(' ').slice(0, 3).join(' ');
+  return words.length > 22 ? words.slice(0, 22).trim() : words;
+}
+
+function saveQuickReplyToActiveProfile(reply, config) {
+  const activeId = config?.activeProfile;
+  const profiles = config?.profiles;
+  if (!activeId || !profiles?.[activeId]) return false;
+  const text = typeof reply?.text === 'string' ? reply.text.trim() : '';
+  if (!text) return false;
+  const emoji = typeof reply?.emoji === 'string' && reply.emoji.trim() ? reply.emoji.trim() : '✨';
+  const label = typeof reply?.label === 'string' && reply.label.trim() ? reply.label.trim() : suggestReplyLabel(text) || 'Saved';
+
+  const nextProfiles = Object.assign({}, profiles, {
+    [activeId]: {
+      ...profiles[activeId],
+      quickReplies: [...(profiles[activeId].quickReplies || []), { emoji, label, text }]
+    }
+  });
+
+  if (typeof chrome !== 'undefined' && chrome.storage?.sync) {
+    chrome.storage.sync.set({
+      activeProfile: activeId,
+      profiles: nextProfiles,
+      quickReplies: nextProfiles[activeId].quickReplies
+    });
+    return true;
+  }
+  return false;
+}
+
+function createSavePromptDialog() {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'cqr-save-dialog';
+  dialog.setAttribute('aria-labelledby', 'cqr-save-title');
+  dialog.setAttribute('closedby', 'closerequest');
+  dialog.addEventListener('pointerdown', (event) => {
+    if (isTrustedUserEvent(event) && isBackdropClick(event, dialog)) closeSavePromptDialog();
+  });
+
+  const header = document.createElement('header');
+  header.className = 'cqr-template-header';
+  const title = document.createElement('h2');
+  title.id = 'cqr-save-title';
+  title.textContent = 'Save quick reply';
+  header.appendChild(title);
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'cqr-template-copy';
+  subtitle.textContent = 'Save this prompt to your active profile.';
+
+  const form = document.createElement('form');
+  form.className = 'cqr-template-form';
+
+  const row = document.createElement('div');
+  row.className = 'cqr-save-row';
+
+  const emojiField = document.createElement('div');
+  emojiField.className = 'cqr-template-field';
+  const emojiLabel = document.createElement('label');
+  emojiLabel.htmlFor = 'cqr-save-emoji';
+  emojiLabel.textContent = 'Emoji';
+  const emojiInput = document.createElement('input');
+  emojiInput.id = 'cqr-save-emoji';
+  emojiInput.name = 'emoji';
+  emojiInput.type = 'text';
+  emojiInput.value = '✨';
+  emojiField.append(emojiLabel, emojiInput);
+
+  const labelField = document.createElement('div');
+  labelField.className = 'cqr-template-field';
+  const labelLabel = document.createElement('label');
+  labelLabel.htmlFor = 'cqr-save-label';
+  labelLabel.textContent = 'Label';
+  const labelInput = document.createElement('input');
+  labelInput.id = 'cqr-save-label';
+  labelInput.name = 'label';
+  labelInput.type = 'text';
+  labelInput.required = true;
+  labelInput.placeholder = 'e.g. Code review';
+  labelField.append(labelLabel, labelInput);
+  row.append(emojiField, labelField);
+
+  const textField = document.createElement('div');
+  textField.className = 'cqr-template-field';
+  const textLabel = document.createElement('label');
+  textLabel.htmlFor = 'cqr-save-text';
+  textLabel.textContent = 'Prompt text (supports {{topic}} and {{selection}})';
+  const textArea = document.createElement('textarea');
+  textArea.id = 'cqr-save-text';
+  textArea.name = 'text';
+  textArea.required = true;
+  textArea.placeholder = 'Write or paste your reusable prompt...';
+  textField.append(textLabel, textArea);
+
+  const actions = document.createElement('div');
+  actions.className = 'cqr-template-actions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'cqr-template-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.addEventListener('click', (event) => {
+    if (isTrustedUserEvent(event)) closeSavePromptDialog();
+  });
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'cqr-template-submit';
+  submit.textContent = 'Save reply';
+  actions.append(cancel, submit);
+
+  form.append(row, textField, actions);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!isTrustedUserEvent(event)) return;
+    if (!form.reportValidity()) return;
+    const saved = saveQuickReplyToActiveProfile({
+      emoji: form.elements.emoji.value,
+      label: form.elements.label.value,
+      text: form.elements.text.value
+    }, saveConfig);
+    if (saved) closeSavePromptDialog();
+  });
+
+  dialog.addEventListener('close', () => {
+    saveConfig = null;
+    armIdleFade?.();
+  });
+
+  dialog.append(header, subtitle, form);
+  document.body.appendChild(dialog);
+  saveDialogEl = dialog;
+  saveFormEl = form;
+  saveSubtitleEl = subtitle;
+}
+
+function openSavePromptDialog(config) {
+  if (!config?.profiles || isModalOpenOnPage()) return false;
+  if (!saveDialogEl) createSavePromptDialog();
+  if (!saveDialogEl || !saveFormEl || !saveSubtitleEl) return false;
+
+  saveConfig = config;
+  const activeProfile = config.profiles[config.activeProfile];
+  saveSubtitleEl.textContent = activeProfile
+    ? `Save to ${activeProfile.icon || '💬'} ${activeProfile.name || config.activeProfile}`
+    : 'Save this prompt to your active profile.';
+
+  const currentText = getInputText();
+  saveFormEl.elements.emoji.value = '✨';
+  saveFormEl.elements.text.value = currentText;
+  saveFormEl.elements.label.value = suggestReplyLabel(currentText);
+
+  if (!saveDialogEl.open) saveDialogEl.showModal();
+  const focusTarget = currentText ? saveFormEl.elements.label : saveFormEl.elements.text;
+  focusTarget.focus({ preventScroll: true });
+  return true;
 }
 
 function createTemplateVariableDialog() {
@@ -650,8 +894,16 @@ function isBackdropClick(event, dialog) {
 function renderCommandPaletteResults() {
   if (!commandPaletteResultsEl || !commandPaletteInputEl) return;
 
+  const searchableReplies = commandPaletteConfig?.profiles
+    ? COMMAND_PALETTE.collectAllProfileReplies(
+        commandPaletteConfig.profiles,
+        PROFILE_PACKS.PROFILE_ORDER,
+        commandPaletteConfig.activeProfile
+      )
+    : commandPaletteConfig?.quickReplies;
+
   commandPaletteResults = COMMAND_PALETTE.filterQuickReplies(
-    commandPaletteConfig?.quickReplies,
+    searchableReplies,
     commandPaletteInputEl.value
   );
   commandPaletteActiveIndex = commandPaletteResults.length
@@ -671,7 +923,16 @@ function renderCommandPaletteResults() {
     const result = document.createElement('button');
     result.type = 'button';
     result.className = 'cqr-command-result' + (index === commandPaletteActiveIndex ? ' cqr-command-result-active' : '');
-    result.textContent = `${reply.emoji || '💬'} ${getReplyDisplayLabel(reply)}`;
+    const mainLabel = document.createElement('span');
+    mainLabel.className = 'cqr-command-result-label';
+    mainLabel.textContent = `${reply.emoji || '💬'} ${getReplyDisplayLabel(reply)}`;
+    result.appendChild(mainLabel);
+    if (reply._profileName) {
+      const badge = document.createElement('span');
+      badge.className = 'cqr-command-profile';
+      badge.textContent = `${reply._profileIcon || '💬'} ${reply._profileName}`;
+      result.appendChild(badge);
+    }
     result.title = `Use ${getReplyDisplayLabel(reply)}`;
     result.addEventListener('click', (event) => {
       if (isTrustedUserEvent(event)) selectCommandPaletteReply(reply);
@@ -708,7 +969,7 @@ function createCommandPalette() {
   input.id = label.htmlFor;
   input.className = 'cqr-command-input';
   input.type = 'search';
-  input.placeholder = 'Search replies';
+  input.placeholder = 'Search replies across all profiles';
   input.autocomplete = 'off';
   input.spellcheck = false;
   const results = document.createElement('div');
@@ -776,24 +1037,38 @@ function mergeDefaultReplies(replies, defaultReplies, limit = MAX_INCLUDED_DEFAU
 function loadConfig() {
   return new Promise((res) => {
     chrome.storage.sync.get(
-      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true, includeDefaultReplies: false, toolbarFadeEnabled: true, toolbarFadeSeconds: DEFAULT_FADE_DELAY_SECONDS },
+      { activeProfile: 'general', profiles: DEFAULT_PROFILES, quickReplies: null, autoSend: false, toolbarEnabled: true, compactToolbar: false, siteEnabled: {}, smartQuestionDetection: false, timeSavedTracking: true, includeDefaultReplies: false, toolbarFadeEnabled: true, toolbarFadeSeconds: DEFAULT_FADE_DELAY_SECONDS, onboardingCompleted: false },
       (cfg) => {
-        const active = cfg.activeProfile || 'general';
-        const profs = cfg.profiles || DEFAULT_PROFILES;
-        const baseReplies = profs[active]?.quickReplies || cfg.quickReplies || DEFAULT_PROFILES.general.quickReplies;
-        const generalReplies = profs.general?.quickReplies || DEFAULT_PROFILES.general.quickReplies;
-        const currentReplies = cfg.includeDefaultReplies === true && active !== 'general'
-          ? mergeDefaultReplies(baseReplies, generalReplies)
-          : baseReplies;
-        res({
-          quickReplies: currentReplies,
-          autoSend: cfg.autoSend,
-          smartQuestionDetection: cfg.smartQuestionDetection === true,
-          timeSavedTracking: cfg.timeSavedTracking !== false,
-          toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled),
-          toolbarFadeEnabled: cfg.toolbarFadeEnabled !== false,
-          toolbarFadeSeconds: normalizeFadeDelay(cfg.toolbarFadeSeconds)
-        });
+        const resolveWithProfiles = (storedProfiles) => {
+          const mergedProfiles = Object.assign({}, DEFAULT_PROFILES, storedProfiles || {});
+          const active = mergedProfiles[cfg.activeProfile] ? cfg.activeProfile : 'general';
+          const baseReplies = mergedProfiles[active]?.quickReplies || cfg.quickReplies || DEFAULT_PROFILES.general.quickReplies;
+          const generalReplies = mergedProfiles.general?.quickReplies || DEFAULT_PROFILES.general.quickReplies;
+          const currentReplies = cfg.includeDefaultReplies === true && active !== 'general'
+            ? mergeDefaultReplies(baseReplies, generalReplies)
+            : baseReplies;
+          res({
+            activeProfile: active,
+            profiles: mergedProfiles,
+            quickReplies: currentReplies,
+            autoSend: cfg.autoSend,
+            smartQuestionDetection: cfg.smartQuestionDetection === true,
+            timeSavedTracking: cfg.timeSavedTracking !== false,
+            toolbarEnabled: isToolbarEnabledForSite(cfg.toolbarEnabled, cfg.siteEnabled),
+            compactToolbar: cfg.compactToolbar === true,
+            toolbarFadeEnabled: cfg.toolbarFadeEnabled !== false,
+            toolbarFadeSeconds: normalizeFadeDelay(cfg.toolbarFadeSeconds),
+            onboardingCompleted: cfg.onboardingCompleted === true
+          });
+        };
+
+        if (chrome.storage?.local?.get) {
+          chrome.storage.local.get({ profilesLocalFallback: null }, (localRes) => {
+            resolveWithProfiles(localRes?.profilesLocalFallback || cfg.profiles);
+          });
+        } else {
+          resolveWithProfiles(cfg.profiles);
+        }
       }
     );
   });
@@ -899,7 +1174,7 @@ function setupIdleFade(bar, config) {
         fadeObserver?.disconnect();
         return;
       }
-      if (commandPaletteEl?.open || templateDialogEl?.open) return;
+      if (commandPaletteEl?.open || templateDialogEl?.open || saveDialogEl?.open || profileMenuEl || overflowMenuEl) return;
       if (bar.classList.contains('cqr-dragging') || bar.matches(':hover') || bar.contains(document.activeElement)) {
         arm();
         return;
@@ -998,9 +1273,385 @@ function resetPosition() {
   return clearToolbarPosition();
 }
 
+function getOrderedProfileIds(profiles) {
+  if (!profiles || typeof profiles !== 'object') return [];
+  return [
+    ...PROFILE_PACKS.PROFILE_ORDER.filter((id) => Boolean(profiles[id])),
+    ...Object.keys(profiles).filter((id) => !PROFILE_PACKS.PROFILE_ORDER.includes(id) && Boolean(profiles[id]))
+  ];
+}
+
+function closeProfileMenu() {
+  if (profileMenuEl) {
+    profileMenuEl.remove();
+    profileMenuEl = null;
+  }
+  if (profileMenuTriggerEl) {
+    profileMenuTriggerEl.setAttribute('aria-expanded', 'false');
+    profileMenuTriggerEl = null;
+  }
+  armIdleFade?.();
+}
+
+function switchActiveProfile(profileId, config) {
+  const targetProfile = config?.profiles?.[profileId];
+  if (!targetProfile) return false;
+  closeProfileMenu();
+  if (typeof chrome !== 'undefined' && chrome.storage?.sync) {
+    chrome.storage.sync.set({
+      activeProfile: profileId,
+      quickReplies: targetProfile.quickReplies,
+      onboardingCompleted: true
+    });
+    return true;
+  }
+  return false;
+}
+
+function openProfileMenu(triggerBtn, config) {
+  if (!triggerBtn || !config?.profiles || isModalOpenOnPage()) return;
+  if (profileMenuEl) {
+    const isSameTrigger = profileMenuTriggerEl === triggerBtn;
+    closeProfileMenu();
+    if (isSameTrigger) return;
+  }
+
+  const profileIds = getOrderedProfileIds(config.profiles);
+  if (profileIds.length < 2 || !document.body) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'cqr-profile-menu' + (panelEl?.classList.contains('cqr-dark') ? ' cqr-dark' : '');
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Switch quick reply profile');
+
+  profileIds.forEach((id) => {
+    const profile = config.profiles[id];
+    const isActive = id === config.activeProfile;
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'cqr-profile-option' + (isActive ? ' cqr-profile-option-active' : '');
+    item.setAttribute('role', 'menuitemradio');
+    item.setAttribute('aria-checked', String(isActive));
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = `${profile.icon || '💬'} ${profile.name || id}`;
+    item.appendChild(labelSpan);
+
+    if (isActive) {
+      const check = document.createElement('span');
+      check.className = 'cqr-profile-check';
+      check.textContent = '✓';
+      check.setAttribute('aria-hidden', 'true');
+      item.appendChild(check);
+    }
+
+    item.addEventListener('mousedown', (e) => {
+      if (isTrustedUserEvent(e)) e.preventDefault();
+    });
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!isTrustedUserEvent(e)) return;
+      switchActiveProfile(id, config);
+    });
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+  profileMenuEl = menu;
+  profileMenuTriggerEl = triggerBtn;
+  triggerBtn.setAttribute('aria-expanded', 'true');
+
+  if (triggerBtn.getBoundingClientRect && menu.getBoundingClientRect) {
+    const tr = triggerBtn.getBoundingClientRect();
+    const mr = menu.getBoundingClientRect();
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1000;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const left = Math.max(8, Math.min(winW - mr.width - 8, tr.left));
+    const aboveTop = tr.top - mr.height - 8;
+    const top = aboveTop >= 8 ? aboveTop : Math.min(winH - mr.height - 8, tr.bottom + 8);
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+  }
+
+  const onOutsidePointer = (event) => {
+    if (!profileMenuEl) {
+      document.removeEventListener('pointerdown', onOutsidePointer, true);
+      document.removeEventListener('keydown', onEscape, true);
+      return;
+    }
+    if (profileMenuEl.contains(event.target) || triggerBtn.contains(event.target)) return;
+    closeProfileMenu();
+    document.removeEventListener('pointerdown', onOutsidePointer, true);
+    document.removeEventListener('keydown', onEscape, true);
+  };
+  const onEscape = (event) => {
+    if (event.key === 'Escape' && isTrustedUserEvent(event)) {
+      closeProfileMenu();
+      document.removeEventListener('pointerdown', onOutsidePointer, true);
+      document.removeEventListener('keydown', onEscape, true);
+    }
+  };
+  document.addEventListener('pointerdown', onOutsidePointer, true);
+  document.addEventListener('keydown', onEscape, true);
+}
+
+function closeOverflowMenu() {
+  if (overflowMenuEl) {
+    overflowMenuEl.remove();
+    overflowMenuEl = null;
+  }
+  if (overflowMenuTriggerEl) {
+    overflowMenuTriggerEl.setAttribute('aria-expanded', 'false');
+    overflowMenuTriggerEl = null;
+  }
+  armIdleFade?.();
+}
+
+function openOverflowMenu(triggerBtn, replies, config) {
+  if (!triggerBtn || !replies?.length || isModalOpenOnPage()) return;
+  if (overflowMenuEl) {
+    const isSameTrigger = overflowMenuTriggerEl === triggerBtn;
+    closeOverflowMenu();
+    if (isSameTrigger) return;
+  }
+  closeProfileMenu();
+  if (!document.body) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'cqr-profile-menu cqr-overflow-menu' + (panelEl?.classList.contains('cqr-dark') ? ' cqr-dark' : '');
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'More quick replies');
+
+  replies.forEach((reply) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'cqr-profile-option';
+    item.setAttribute('role', 'menuitem');
+    item.textContent = `${reply.emoji || '💬'} ${getReplyDisplayLabel(reply)}`;
+    item.title = `${config?.autoSend ? 'Send' : 'Fill'} ${getReplyDisplayLabel(reply)}`;
+    item.addEventListener('mousedown', (e) => {
+      if (isTrustedUserEvent(e)) e.preventDefault();
+    });
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!isTrustedUserEvent(e)) return;
+      closeOverflowMenu();
+      activateQuickReply(reply, config);
+    });
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+  overflowMenuEl = menu;
+  overflowMenuTriggerEl = triggerBtn;
+  triggerBtn.setAttribute('aria-expanded', 'true');
+
+  if (triggerBtn.getBoundingClientRect && menu.getBoundingClientRect) {
+    const tr = triggerBtn.getBoundingClientRect();
+    const mr = menu.getBoundingClientRect();
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1000;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const left = Math.max(8, Math.min(winW - mr.width - 8, tr.right - mr.width));
+    const aboveTop = tr.top - mr.height - 8;
+    const top = aboveTop >= 8 ? aboveTop : Math.min(winH - mr.height - 8, tr.bottom + 8);
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+  }
+
+  const onOutsidePointer = (event) => {
+    if (!overflowMenuEl) {
+      document.removeEventListener('pointerdown', onOutsidePointer, true);
+      document.removeEventListener('keydown', onEscape, true);
+      return;
+    }
+    if (overflowMenuEl.contains(event.target) || triggerBtn.contains(event.target)) return;
+    closeOverflowMenu();
+    document.removeEventListener('pointerdown', onOutsidePointer, true);
+    document.removeEventListener('keydown', onEscape, true);
+  };
+  const onEscape = (event) => {
+    if (event.key === 'Escape' && isTrustedUserEvent(event)) {
+      closeOverflowMenu();
+      document.removeEventListener('pointerdown', onOutsidePointer, true);
+      document.removeEventListener('keydown', onEscape, true);
+    }
+  };
+  document.addEventListener('pointerdown', onOutsidePointer, true);
+  document.addEventListener('keydown', onEscape, true);
+}
+
+function fitToolbarToWidth(bar, maxWidth) {
+  if (!bar || isToolbarCollapsed || !bar._replyItems?.length || !bar._overflowBtn) return;
+  if (!Number.isFinite(maxWidth) || maxWidth <= 0) return;
+
+  const items = bar._replyItems;
+  const overflowBtn = bar._overflowBtn;
+  items.forEach(({ btn }) => btn.classList.remove('cqr-overflow-hidden'));
+  overflowBtn.classList.add('cqr-overflow-hidden');
+  bar._overflowReplies = [];
+
+  const measureWidth = () => bar.scrollWidth || bar.offsetWidth || 0;
+  if (measureWidth() <= maxWidth) return;
+
+  overflowBtn.textContent = '+9 ▾';
+  overflowBtn.classList.remove('cqr-overflow-hidden');
+
+  const hiddenReplies = [];
+  for (let i = items.length - 1; i >= 1; i -= 1) {
+    if (measureWidth() <= maxWidth) break;
+    items[i].btn.classList.add('cqr-overflow-hidden');
+    hiddenReplies.unshift(items[i].reply);
+  }
+
+  if (!hiddenReplies.length) {
+    overflowBtn.classList.add('cqr-overflow-hidden');
+    return;
+  }
+
+  bar._overflowReplies = hiddenReplies;
+  const count = hiddenReplies.length;
+  overflowBtn.textContent = `+${count} ▾`;
+  overflowBtn.title = `${count} more quick ${count === 1 ? 'reply' : 'replies'}`;
+  overflowBtn.setAttribute('aria-label', `Show ${count} more quick ${count === 1 ? 'reply' : 'replies'}`);
+}
+
+function hideReplyPreview() {
+  if (previewTimer !== null) {
+    clearTimeout(previewTimer);
+    previewTimer = null;
+  }
+  if (previewHostEl) {
+    previewHostEl.remove();
+    previewHostEl = null;
+  }
+}
+
+function showReplyPreview(button, reply, shortcut, hasLongPress) {
+  hideReplyPreview();
+  if (!button || !reply || isDragging || profileMenuEl || overflowMenuEl || !document.body) return;
+  if (typeof button.getBoundingClientRect !== 'function') return;
+
+  const isDark = Boolean(panelEl?.classList?.contains('cqr-dark'));
+  const host = document.createElement('div');
+  host.style.position = 'fixed';
+  host.style.zIndex = '2147483647';
+  host.style.pointerEvents = 'none';
+
+  const root = typeof host.attachShadow === 'function' ? host.attachShadow({ mode: 'closed' }) : host;
+  const style = document.createElement('style');
+  style.textContent = `
+    .card {
+      max-width: 280px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: ${isDark ? 'rgba(22, 22, 26, 0.96)' : 'rgba(255, 255, 255, 0.97)'};
+      color: ${isDark ? '#f1f5f9' : '#0f172a'};
+      border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)'};
+      box-shadow: ${isDark ? '0 12px 30px rgba(0, 0, 0, 0.55)' : '0 10px 26px rgba(15, 23, 42, 0.18)'};
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-sizing: border-box;
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .kbd {
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: ${isDark ? 'rgba(255, 255, 255, 0.1)' : '#f1f5f9'};
+      color: ${isDark ? '#cbd5e1' : '#475569'};
+      flex-shrink: 0;
+    }
+    .body {
+      font-size: 11px;
+      line-height: 1.4;
+      color: ${isDark ? '#cbd5e1' : '#334155'};
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .hint {
+      margin-top: 5px;
+      font-size: 9.5px;
+      color: ${isDark ? '#86efac' : '#15803d'};
+      font-weight: 600;
+    }
+  `;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const head = document.createElement('div');
+  head.className = 'head';
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = `${reply.emoji || '💬'} ${getReplyDisplayLabel(reply)}`;
+  head.appendChild(titleSpan);
+  if (shortcut) {
+    const kbd = document.createElement('span');
+    kbd.className = 'kbd';
+    kbd.textContent = shortcut;
+    head.appendChild(kbd);
+  }
+  card.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.textContent = typeof reply.text === 'string' ? reply.text : '';
+  card.appendChild(body);
+
+  if (hasLongPress) {
+    const hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = 'Hold for expanded reply';
+    card.appendChild(hint);
+  }
+
+  root.appendChild(style);
+  root.appendChild(card);
+  document.body.appendChild(host);
+  previewHostEl = host;
+
+  const br = button.getBoundingClientRect();
+  const hr = host.getBoundingClientRect ? host.getBoundingClientRect() : { width: 240, height: 68 };
+  const winW = typeof window !== 'undefined' ? window.innerWidth : 1000;
+  const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const left = Math.max(8, Math.min(winW - hr.width - 8, br.left + (br.width - hr.width) / 2));
+  const aboveTop = br.top - hr.height - 8;
+  const top = aboveTop >= 8 ? aboveTop : Math.min(winH - hr.height - 8, br.bottom + 8);
+  host.style.left = Math.round(left) + 'px';
+  host.style.top = Math.round(top) + 'px';
+}
+
+function attachReplyPreview(button, reply, shortcut, hasLongPress) {
+  button.addEventListener('pointerenter', (event) => {
+    if (!isTrustedUserEvent(event) || isDragging) return;
+    hideReplyPreview();
+    previewTimer = setTimeout(() => {
+      previewTimer = null;
+      showReplyPreview(button, reply, shortcut, hasLongPress);
+    }, 180);
+  });
+  button.addEventListener('pointerleave', hideReplyPreview);
+  button.addEventListener('pointerdown', hideReplyPreview);
+  button.addEventListener('blur', hideReplyPreview);
+}
+
 function buildToolbar(config) {
   const bar = document.createElement('div');
-  bar.className = 'cqr-toolbar' + (isToolbarCollapsed ? ' cqr-collapsed' : '');
+  bar.className = 'cqr-toolbar'
+    + (isToolbarCollapsed ? ' cqr-collapsed' : '')
+    + (config.compactToolbar ? ' cqr-compact' : '');
 
   const handle = document.createElement('span');
   handle.className = 'cqr-drag-handle';
@@ -1008,18 +1659,69 @@ function buildToolbar(config) {
   handle.title = 'Drag to move toolbar';
   bar.appendChild(handle);
 
+  const profileIds = getOrderedProfileIds(config.profiles);
+  if (profileIds.length > 1) {
+    const activeId = config.activeProfile && config.profiles[config.activeProfile] ? config.activeProfile : profileIds[0];
+    const activeProfileObj = config.profiles[activeId];
+    const profileBtn = document.createElement('button');
+    profileBtn.type = 'button';
+    const showFirstRunHint = config.onboardingCompleted === false;
+    profileBtn.className = 'cqr-btn cqr-profile-btn' + (showFirstRunHint ? ' cqr-smart-reply-btn' : '');
+    profileBtn.textContent = showFirstRunHint
+      ? `${activeProfileObj?.icon || '💬'} Pick pack ▾`
+      : `${activeProfileObj?.icon || '💬'} ▾`;
+    profileBtn.title = `Switch profile (${activeProfileObj?.name || activeId})`;
+    profileBtn.setAttribute('aria-label', `Switch profile (${activeProfileObj?.name || activeId})`);
+    profileBtn.setAttribute('aria-haspopup', 'menu');
+    profileBtn.setAttribute('aria-expanded', 'false');
+    profileBtn.addEventListener('mousedown', (e) => {
+      if (isTrustedUserEvent(e)) e.preventDefault();
+    });
+    profileBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!isTrustedUserEvent(e)) return;
+      if (!isDragging) openProfileMenu(profileBtn, config);
+    });
+    bar.appendChild(profileBtn);
+  }
+
+  const replyItems = [];
   config.quickReplies.forEach((r, index) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'cqr-btn cqr-reply-btn';
-    btn.textContent = `${r.emoji} ${getReplyDisplayLabel(r)}`;
+    btn.textContent = config.compactToolbar ? (r.emoji || '💬') : `${r.emoji} ${getReplyDisplayLabel(r)}`;
+    if (config.compactToolbar) btn.setAttribute('aria-label', getReplyDisplayLabel(r));
     const shortcut = index < 9 ? `Alt+${index + 1}` : null;
     const longPressReply = LONG_PRESS.getLongPressReply(r);
     btn.title = getReplyButtonTitle(r, config, index, Boolean(longPressReply));
     if (shortcut) btn.setAttribute('aria-keyshortcuts', shortcut);
     addQuickReplyInteraction(btn, r, config);
+    attachReplyPreview(btn, r, shortcut, Boolean(longPressReply));
     bar.appendChild(btn);
+    replyItems.push({ btn, reply: r });
   });
+  bar._replyItems = replyItems;
+  bar._overflowReplies = [];
+
+  if (replyItems.length > 2) {
+    const overflowBtn = document.createElement('button');
+    overflowBtn.type = 'button';
+    overflowBtn.className = 'cqr-btn cqr-overflow-btn cqr-overflow-hidden';
+    overflowBtn.textContent = '+1 ▾';
+    overflowBtn.setAttribute('aria-haspopup', 'menu');
+    overflowBtn.setAttribute('aria-expanded', 'false');
+    overflowBtn.addEventListener('mousedown', (e) => {
+      if (isTrustedUserEvent(e)) e.preventDefault();
+    });
+    overflowBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!isTrustedUserEvent(e)) return;
+      if (!isDragging) openOverflowMenu(overflowBtn, bar._overflowReplies, config);
+    });
+    bar._overflowBtn = overflowBtn;
+    bar.appendChild(overflowBtn);
+  }
 
   if (config.smartReplies?.length) {
     const smartGroup = document.createElement('span');
@@ -1038,6 +1740,24 @@ function buildToolbar(config) {
       smartGroup.appendChild(smartBtn);
     });
     bar.appendChild(smartGroup);
+  }
+
+  if (config.profiles) {
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'cqr-btn cqr-save-btn';
+    saveBtn.textContent = '+';
+    saveBtn.title = 'Save current prompt as quick reply';
+    saveBtn.setAttribute('aria-label', 'Save current prompt as quick reply');
+    saveBtn.addEventListener('mousedown', (e) => {
+      if (isTrustedUserEvent(e)) e.preventDefault();
+    });
+    saveBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!isTrustedUserEvent(e)) return;
+      if (!isDragging) openSavePromptDialog(config);
+    });
+    bar.appendChild(saveBtn);
   }
 
   const commandBtn = document.createElement('button');
@@ -1101,7 +1821,12 @@ function buildToolbar(config) {
   return bar;
 }
 
-function hidePanel() { if (panelEl) panelEl.classList.remove('cqr-visible'); }
+function hidePanel() {
+  closeProfileMenu();
+  closeOverflowMenu();
+  hideReplyPreview();
+  if (panelEl) panelEl.classList.remove('cqr-visible');
+}
 
 function getPanelLeft(composerRect, inputRect, panelWidth, collapsed) {
   return collapsed && inputRect
@@ -1128,15 +1853,17 @@ function positionPanel() {
   const maxW = Math.min(Math.round(r.width), window.innerWidth - 24);
   panelEl.style.maxWidth = maxW + 'px';
   panelEl.style.width = 'max-content';
+  fitToolbarToWidth(panelEl, maxW);
 
+  const fittedW = panelEl.offsetWidth || pw;
   let top = r.top - (ph || 30) - 10;
   // Grok's styled composer wrapper can be much wider than the editable field.
   // A collapsed toolbar should track the field itself on every provider.
   const inputRect = currentInputEl.getBoundingClientRect();
-  const left = getPanelLeft(r, inputRect, pw, isToolbarCollapsed);
+  const left = getPanelLeft(r, inputRect, fittedW, isToolbarCollapsed);
 
   panelEl.style.top = Math.round(top < 8 ? r.bottom + 10 : top) + 'px';
-  panelEl.style.left = Math.round(Math.max(12, Math.min(left, window.innerWidth - pw - 12))) + 'px';
+  panelEl.style.left = Math.round(Math.max(12, Math.min(left, window.innerWidth - fittedW - 12))) + 'px';
 }
 
 function syncPanel() {
@@ -1206,6 +1933,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof c
         void resetPosition();
         return;
       }
+      closeProfileMenu();
+      closeOverflowMenu();
+      hideReplyPreview();
       if (panelEl) { panelEl.remove(); panelEl = null; }
       currentConfig = null;
       initPanel();
@@ -1228,8 +1958,11 @@ if (typeof module !== 'undefined' && module.exports) {
     getSmartRepliesForPage,
     openCommandPalette,
     getInputEl,
+    getInputText,
     getSendButton,
     setInputText,
+    suggestReplyLabel,
+    saveQuickReplyToActiveProfile,
     activateQuickReply,
     scoreInput,
     parseRgb,
@@ -1252,6 +1985,9 @@ if (typeof module !== 'undefined' && module.exports) {
     saveToolbarPosition,
     clearToolbarPosition,
     buildToolbar,
+    fitToolbarToWidth,
+    getOrderedProfileIds,
+    switchActiveProfile,
     setupDraggable,
     setupIdleFade,
     normalizeFadeDelay,

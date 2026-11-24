@@ -34,3 +34,18 @@ test('rejects ordinary prose and incomplete option lists', () => {
   assert.deepEqual(detection.detectSmartReplies('Yes or no is a common binary pattern.'), []);
   assert.deepEqual(detection.detectSmartReplies('Choose one:\nA) Only option'), []);
 });
+
+test('detects Option 1/Option 2 lists and closing confirmation questions', () => {
+  assert.deepEqual(
+    detection.detectSmartReplies('Which approach do you prefer?\n**Option 1:** Use SQLite\n**Option 2:** Use Postgres').map((r) => r.text),
+    ['Option 1', 'Option 2']
+  );
+  assert.deepEqual(
+    detection.detectSmartReplies('I fixed the login bug.\n\nWould you like me to write unit tests too?').map((r) => r.text),
+    ['Yes', 'No']
+  );
+  assert.deepEqual(
+    detection.detectSmartReplies('Should I proceed with refactoring the service layer?').map((r) => r.text),
+    ['Yes', 'No']
+  );
+});

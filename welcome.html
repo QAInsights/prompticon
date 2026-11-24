@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Welcome to Prompticon</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --card-border: #e2e8f0;
+    --text: #0f172a;
+    --text-sub: #475569;
+    --text-muted: #64748b;
+    --accent: #16a34a;
+    --accent-dark: #15803d;
+    --accent-soft: rgba(22, 163, 74, 0.1);
+    --pill-bg: #f1f5f9;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #0b1120;
+      --card: #111c33;
+      --card-border: rgba(255, 255, 255, 0.09);
+      --text: #f1f5f9;
+      --text-sub: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --accent-soft: rgba(34, 197, 94, 0.16);
+      --pill-bg: #1e293b;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 36px 20px 56px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+  }
+
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: -0.03em;
+  }
+
+  .brand p {
+    margin: 3px 0 0;
+    font-size: 13.5px;
+    color: var(--text-sub);
+  }
+
+  .privacy-pill {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 999px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .step-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .card h2 {
+    margin: 0;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .role-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  }
+
+  .role-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .role-btn.is-active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22);
+  }
+
+  .preview-box {
+    background: var(--pill-bg);
+    border-radius: 10px;
+    padding: 12px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .preview-title {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .preview-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .preview-chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+  }
+
+  .toggles {
+    display: grid;
+    gap: 8px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    cursor: pointer;
+  }
+
+  .toggle-row strong {
+    display: block;
+    font-size: 13px;
+  }
+
+  .toggle-row span {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .toggle-row input {
+    accent-color: var(--accent);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .launch-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--accent-dark);
+    color: #ffffff;
+  }
+
+  .launch-btn.secondary {
+    background: var(--pill-bg);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+  }
+
+  .launch-btn:hover {
+    opacity: 0.92;
+  }
+
+  .shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+
+  .shortcuts kbd {
+    background: var(--pill-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    min-height: 16px;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div class="brand">
+        <img src="assets/icon-128.png" alt="Prompticon logo" />
+        <div>
+          <h1>Welcome to Prompticon</h1>
+          <p>Reusable quick replies &amp; prompt templates across 26+ AI chat sites.</p>
+        </div>
+      </div>
+      <span class="privacy-pill">100% Local · Zero Tracking</span>
+    </header>
+
+    <section class="card" aria-labelledby="roleHeading">
+      <p class="step-label">Step 1 of 2</p>
+      <h2 id="roleHeading">Pick your starting profile pack</h2>
+      <div class="role-grid" id="roleGrid" role="radiogroup" aria-label="Choose starting profile"></div>
+      <div class="preview-box">
+        <p class="preview-title" id="previewTitle">Included quick replies</p>
+        <div class="preview-chips" id="previewChips"></div>
+      </div>
+      <p class="status" id="statusMessage" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" aria-labelledby="prefsHeading">
+      <p class="step-label">Step 2 of 2</p>
+      <h2 id="prefsHeading">Tailor your toolbar</h2>
+      <div class="toggles">
+        <label class="toggle-row" for="welcomeSmartDetection">
+          <div>
+            <strong>Smart question detection</strong>
+            <span>Locally suggest Yes/No, Option 1/2, or A–E answers from the latest AI reply.</span>
+          </div>
+          <input id="welcomeSmartDetection" type="checkbox" />
+        </label>
+        <label class="toggle-row" for="welcomeCompact">
+          <div>
+            <strong>Compact toolbar (emoji only)</strong>
+            <span>Show compact emoji chips on the floating bar — hover any chip to preview the prompt.</span>
+          </div>
+          <input id="welcomeCompact" type="checkbox" />
+        </label>
+        <label class="toggle-row" for="welcomeDefaults">
+          <div>
+            <strong>Pin Yes / No / Continue everywhere</strong>
+            <span>Keep your top 3 General replies handy at the end of every profile.</span>
+          </div>
+          <input id="welcomeDefaults" type="checkbox" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="tryHeading">
+      <h2 id="tryHeading">Try Prompticon right now</h2>
+      <div class="launch-links">
+        <a class="launch-btn" href="https://chatgpt.com" target="_blank" rel="noopener">Open ChatGPT →</a>
+        <a class="launch-btn secondary" href="https://claude.ai" target="_blank" rel="noopener">Open Claude →</a>
+        <a class="launch-btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">Open Gemini →</a>
+        <a class="launch-btn secondary" href="https://www.perplexity.ai" target="_blank" rel="noopener">Open Perplexity →</a>
+      </div>
+      <div class="shortcuts">
+        <span><kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>9</kbd> Insert reply</span>
+        <span><kbd>Alt</kbd>+<kbd>P</kbd> Search all packs</span>
+        <span><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> Open popup</span>
+        <span><kbd>{{selection}}</kbd> Auto-fills highlighted text</span>
+        <span><strong>Hold</strong> a chip for expanded reply</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="profile-packs.js"></script>
+  <script src="welcome.js"></script>
+</body>
+</html>

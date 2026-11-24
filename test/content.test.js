@@ -2,10 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const content = require('../content.js');
 
-test('PROVIDERS contains all 20 target LLM providers with valid hosts and selectors', () => {
-  assert.equal(content.PROVIDERS.length, 20);
+test('PROVIDERS contains all 26 target LLM providers with valid hosts and selectors', () => {
+  assert.equal(content.PROVIDERS.length, 26);
   const providerIds = content.PROVIDERS.map(p => p.id);
-  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek', 'copilot', 'devin', 'cursor', 'githubcopilot', 'jules', 'v0', 'bolt', 'lovable', 'replit', 'aistudio', 'groq', 'phind']);
+  assert.deepEqual(providerIds, ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'qwen', 'meta', 'deepseek', 'copilot', 'devin', 'cursor', 'githubcopilot', 'jules', 'v0', 'bolt', 'lovable', 'replit', 'aistudio', 'groq', 'phind', 'perplexity', 'notebooklm', 'poe', 'lmarena', 'openrouter', 'kimi']);
 
   content.PROVIDERS.forEach(p => {
     assert.ok(p.hosts.length > 0, `Provider ${p.id} should have hosts`);
@@ -42,6 +42,14 @@ test('getProvider matches hostnames accurately', () => {
     { host: 'aistudio.google.com', expected: 'aistudio' },
     { host: 'groq.com', expected: 'groq' },
     { host: 'phind.com', expected: 'phind' },
+    { host: 'perplexity.ai', expected: 'perplexity' },
+    { host: 'www.perplexity.ai', expected: 'perplexity' },
+    { host: 'notebooklm.google.com', expected: 'notebooklm' },
+    { host: 'poe.com', expected: 'poe' },
+    { host: 'lmarena.ai', expected: 'lmarena' },
+    { host: 'chat.lmsys.org', expected: 'lmarena' },
+    { host: 'openrouter.ai', expected: 'openrouter' },
+    { host: 'kimi.com', expected: 'kimi' },
     { host: 'unknown-domain.com', expected: null }
   ];
 
@@ -809,4 +817,296 @@ test('loadConfig keeps profiles standalone when defaults inclusion is off', asyn
   assert.equal(cfg.quickReplies.length, content.DEFAULT_PROFILES.developer.quickReplies.length);
 
   global.chrome = origChrome;
+});
+
+test('setInputText does not duplicate text on Lexical-style editors that handle beforeinput', () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const origLoc = global.location;
+  const origInputEvent = global.InputEvent;
+  const origEvent = global.Event;
+
+  let execCommandCalls = 0;
+  const editor = {
+    tagName: 'DIV',
+    isContentEditable: true,
+    isConnected: true,
+    id: 'ask-input',
+    className: '',
+    offsetTop: 300,
+    textContent: '',
+    closest: () => ({}),
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: 600, height: 40, top: 300 }),
+    focus: () => {},
+    querySelector: () => null,
+    dispatchEvent: (event) => {
+      if (event.type === 'beforeinput' && event.data) {
+        editor.textContent += event.data;
+        event.defaultPrevented = true;
+        return false;
+      }
+      if (event.type === 'input' && event.data) {
+        editor.textContent += event.data;
+      }
+      return true;
+    }
+  };
+
+  global.location = { hostname: 'www.perplexity.ai' };
+  global.window = {
+    innerHeight: 900,
+    getComputedStyle: () => ({ display: 'block', visibility: 'visible', opacity: '1' }),
+    getSelection: () => ({ removeAllRanges: () => {}, addRange: () => {} })
+  };
+  global.document = {
+    querySelectorAll: (sel) => (sel === 'div#ask-input[contenteditable="true"]' ? [editor] : []),
+    createRange: () => ({ selectNodeContents: () => {}, collapse: () => {} }),
+    execCommand: (_cmd, _ui, text) => {
+      execCommandCalls += 1;
+      editor.textContent += text;
+      return true;
+    }
+  };
+  global.InputEvent = class InputEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+  global.Event = class Event { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+
+  try {
+    assert.equal(content.setInputText('Yes'), true);
+    assert.equal(editor.textContent, 'Yes');
+    assert.equal(execCommandCalls, 0);
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+    global.location = origLoc;
+    global.InputEvent = origInputEvent;
+    global.Event = origEvent;
+  }
+});
+
+test('buildToolbar renders an on-toolbar profile switcher and switchActiveProfile updates storage', () => {
+  const origDoc = global.document;
+  const origChrome = global.chrome;
+  let saved = null;
+
+  global.chrome = {
+    storage: {
+      sync: {
+        set: (values) => { saved = values; }
+      }
+    }
+  };
+  global.document = {
+    createElement: (tag) => ({
+      tagName: tag.toUpperCase(),
+      className: '',
+      children: [],
+      attributes: {},
+      listeners: {},
+      style: {},
+      classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+      setAttribute(name, value) { this.attributes[name] = value; },
+      addEventListener(type, fn) { this.listeners[type] = fn; },
+      appendChild(child) { this.children.push(child); return child; }
+    })
+  };
+
+  try {
+    const config = {
+      activeProfile: 'general',
+      profiles: content.DEFAULT_PROFILES,
+      quickReplies: content.DEFAULT_PROFILES.general.quickReplies,
+      autoSend: false
+    };
+    const toolbar = content.buildToolbar(config);
+    const profileBtn = toolbar.children.find((child) => child.className.includes('cqr-profile-btn'));
+    assert.ok(profileBtn, 'toolbar includes profile switcher button');
+    assert.equal(profileBtn.textContent, '🌐 ▾');
+    assert.equal(profileBtn.attributes['aria-haspopup'], 'menu');
+
+    assert.equal(content.switchActiveProfile('developer', config), true);
+    assert.equal(saved.activeProfile, 'developer');
+    assert.deepEqual(saved.quickReplies, content.DEFAULT_PROFILES.developer.quickReplies);
+    assert.equal(content.switchActiveProfile('nonexistent', config), false);
+  } finally {
+    global.document = origDoc;
+    global.chrome = origChrome;
+  }
+});
+
+test('fitToolbarToWidth tucks overflowing replies into +N pill and preserves order', () => {
+  const makeClassList = (initial = []) => {
+    const set = new Set(initial);
+    return {
+      add: (c) => set.add(c),
+      remove: (c) => set.delete(c),
+      contains: (c) => set.has(c)
+    };
+  };
+  const replies = [
+    { emoji: '🐛', label: 'Debug', text: 'Debug' },
+    { emoji: '⚡', label: 'Optimize', text: 'Optimize' },
+    { emoji: '🧪', label: 'Add Tests', text: 'Add Tests' },
+    { emoji: '📖', label: 'Explain', text: 'Explain' }
+  ];
+  const replyItems = replies.map((reply) => ({
+    reply,
+    btn: { classList: makeClassList() }
+  }));
+  const overflowBtn = {
+    classList: makeClassList(['cqr-overflow-hidden']),
+    textContent: '',
+    title: '',
+    attributes: {},
+    setAttribute(k, v) { this.attributes[k] = v; }
+  };
+  const bar = {
+    _replyItems: replyItems,
+    _overflowBtn: overflowBtn,
+    _overflowReplies: [],
+    get scrollWidth() {
+      const visibleReplies = replyItems.filter(({ btn }) => !btn.classList.contains('cqr-overflow-hidden')).length;
+      const overflowWidth = overflowBtn.classList.contains('cqr-overflow-hidden') ? 0 : 60;
+      return visibleReplies * 100 + overflowWidth + 120;
+    }
+  };
+
+  // Max width 390 fits 2 visible replies (200) + overflow (60) + controls (120) = 380
+  content.fitToolbarToWidth(bar, 390);
+  assert.equal(overflowBtn.classList.contains('cqr-overflow-hidden'), false);
+  assert.equal(overflowBtn.textContent, '+2 ▾');
+  assert.deepEqual(bar._overflowReplies.map((r) => r.label), ['Add Tests', 'Explain']);
+  assert.equal(replyItems[0].btn.classList.contains('cqr-overflow-hidden'), false);
+  assert.equal(replyItems[1].btn.classList.contains('cqr-overflow-hidden'), false);
+  assert.equal(replyItems[2].btn.classList.contains('cqr-overflow-hidden'), true);
+  assert.equal(replyItems[3].btn.classList.contains('cqr-overflow-hidden'), true);
+});
+
+test('buildToolbar compactToolbar mode renders emoji-only chips with accessible labels', () => {
+  const origDoc = global.document;
+  global.document = {
+    createElement: (tag) => ({
+      tagName: tag.toUpperCase(),
+      className: '',
+      children: [],
+      attributes: {},
+      listeners: {},
+      style: {},
+      classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+      setAttribute(name, value) { this.attributes[name] = value; },
+      addEventListener(type, fn) { this.listeners[type] = fn; },
+      appendChild(child) { this.children.push(child); return child; }
+    })
+  };
+
+  try {
+    const toolbar = content.buildToolbar({
+      quickReplies: [
+        { emoji: '🐛', label: 'Debug', text: 'Debug this' },
+        { emoji: '⚡', label: 'Optimize', text: 'Optimize this' }
+      ],
+      compactToolbar: true,
+      autoSend: false
+    });
+    assert.ok(toolbar.className.includes('cqr-compact'));
+    assert.equal(toolbar.children[1].textContent, '🐛');
+    assert.equal(toolbar.children[1].attributes['aria-label'], 'Debug');
+    assert.equal(toolbar.children[2].textContent, '⚡');
+    assert.equal(toolbar.children[2].attributes['aria-label'], 'Optimize');
+  } finally {
+    global.document = origDoc;
+  }
+});
+
+test('setInputText does not duplicate multi-line text when execCommand splits paragraphs', () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const origLoc = global.location;
+  const origInputEvent = global.InputEvent;
+  const origEvent = global.Event;
+
+  const paragraph = { textContent: '', focus() {}, dispatchEvent: () => true };
+  const editor = {
+    tagName: 'DIV',
+    isContentEditable: true,
+    isConnected: true,
+    id: 'prompt-textarea',
+    className: '',
+    offsetTop: 300,
+    textContent: '',
+    closest: () => ({}),
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: 600, height: 40, top: 300 }),
+    focus: () => {},
+    querySelector: () => paragraph,
+    dispatchEvent: () => true
+  };
+
+  global.location = { hostname: 'chatgpt.com' };
+  global.window = {
+    innerHeight: 900,
+    getComputedStyle: () => ({ display: 'block', visibility: 'visible', opacity: '1' }),
+    getSelection: () => ({ removeAllRanges: () => {}, addRange: () => {} })
+  };
+  global.document = {
+    querySelectorAll: (sel) => (sel === 'div#prompt-textarea' ? [editor] : []),
+    createRange: () => ({ selectNodeContents: () => {}, collapse: () => {} }),
+    execCommand: (_cmd, _ui, text) => {
+      // Simulate ProseMirror splitting \n\n into separate <p> tags (no newlines in textContent)
+      editor.textContent = text.replace(/\n+/g, '');
+      return true;
+    }
+  };
+  global.InputEvent = class InputEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+  global.Event = class Event { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+
+  try {
+    const multiLine = 'Write tests.\n\nPlease explain your reasoning.';
+    assert.equal(content.setInputText(multiLine), true);
+    assert.equal(paragraph.textContent, '');
+    assert.equal(editor.textContent, 'Write tests.Please explain your reasoning.');
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+    global.location = origLoc;
+    global.InputEvent = origInputEvent;
+    global.Event = origEvent;
+  }
+});
+
+test('suggestReplyLabel and saveQuickReplyToActiveProfile save a new reply to sync storage', () => {
+  const origChrome = global.chrome;
+  let saved = null;
+  global.chrome = {
+    storage: {
+      sync: {
+        set: (values) => { saved = values; }
+      }
+    }
+  };
+
+  try {
+    assert.equal(content.suggestReplyLabel('Review this pull request carefully'), 'Review this pull');
+    assert.equal(content.suggestReplyLabel('   '), '');
+
+    const config = {
+      activeProfile: 'developer',
+      profiles: JSON.parse(JSON.stringify(content.DEFAULT_PROFILES))
+    };
+    const beforeCount = config.profiles.developer.quickReplies.length;
+    const ok = content.saveQuickReplyToActiveProfile(
+      { emoji: '🔎', label: 'PR Review', text: 'Review {{selection}} for edge cases.' },
+      config
+    );
+    assert.equal(ok, true);
+    assert.equal(saved.activeProfile, 'developer');
+    assert.equal(saved.quickReplies.length, beforeCount + 1);
+    assert.deepEqual(saved.quickReplies.at(-1), {
+      emoji: '🔎',
+      label: 'PR Review',
+      text: 'Review {{selection}} for edge cases.'
+    });
+  } finally {
+    global.chrome = origChrome;
+  }
 });
