@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prompticon",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Customizable quick replies and reusable prompt templates for supported AI chat websites.",
   "permissions": ["storage"],
   "incognito": "not_allowed",
