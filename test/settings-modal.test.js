@@ -27,10 +27,11 @@ test('settings are confined to a top-right native dialog', () => {
   assert.match(popupScript, /siteListEl\.addEventListener\('change', savePreferenceSettings\)/);
 });
 
-test('the popup has no native scrollbar', () => {
+test('the popup uses a sleek thin vertical scrollbar when content exceeds browser height', () => {
   const popupHtml = fs.readFileSync(path.join(root, 'popup.html'), 'utf8');
 
-  assert.match(popupHtml, /html,\s*body\s*\{\s*overflow:\s*clip;/);
+  assert.match(popupHtml, /html,\s*body\s*\{[^}]*overflow-y:\s*auto;/);
+  assert.match(popupHtml, /html,\s*body\s*\{[^}]*scrollbar-width:\s*thin;/);
 });
 
 test('time-saved tracking is packaged and configurable', () => {
