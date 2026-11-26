@@ -287,23 +287,35 @@ function getComposerContainer(inputEl) {
   return best;
 }
 
-function getSendButton() {
+function getSendButton(inputEl = getInputEl()) {
   const provider = getProvider();
+  const container = inputEl ? getComposerContainer(inputEl) : null;
+  const searchRoots = container && typeof container.querySelector === 'function'
+    ? [container, document]
+    : [document];
+
   if (provider) {
-    for (const sel of provider.sendSelectors) {
-      const btn = document.querySelector(sel);
-      if (btn && btn.isConnected && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') return btn;
-    }
-    for (const sel of provider.sendSelectors) {
-      const btn = document.querySelector(sel);
-      if (btn && btn.isConnected) return btn;
+    for (const root of searchRoots) {
+      for (const sel of provider.sendSelectors) {
+        const btn = root.querySelector(sel);
+        if (btn && btn.isConnected && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') return btn;
+      }
+      for (const sel of provider.sendSelectors) {
+        const btn = root.querySelector(sel);
+        if (btn && btn.isConnected) return btn;
+      }
     }
   }
-  return Array.from(document.querySelectorAll('button')).find((b) => {
-    if (b.disabled || b.getAttribute('aria-disabled') === 'true' || !isVisible(b)) return false;
-    const hay = [b.getAttribute('aria-label'), b.getAttribute('data-testid'), b.getAttribute('title'), b.textContent].filter(Boolean).join(' ');
-    return /send|submit/i.test(hay);
-  }) || null;
+  for (const root of searchRoots) {
+    if (typeof root.querySelectorAll !== 'function') continue;
+    const match = Array.from(root.querySelectorAll('button')).find((b) => {
+      if (b.disabled || b.getAttribute('aria-disabled') === 'true' || !isVisible(b)) return false;
+      const hay = [b.getAttribute('aria-label'), b.getAttribute('data-testid'), b.getAttribute('title'), b.textContent].filter(Boolean).join(' ');
+      return /send|submit/i.test(hay);
+    });
+    if (match) return match;
+  }
+  return null;
 }
 
 function getInputText() {
@@ -382,9 +394,11 @@ function setInputText(text) {
   return true;
 }
 
-function trySend(btn, attemptsLeft = 15) {
+function trySend(attemptsLeft = 10, enterDispatched = false) {
   const inputEl = getInputEl();
-  if (inputEl) {
+  if (!inputEl || !getInputText()) return;
+
+  if (!enterDispatched) {
     try {
       const enterEvt = new KeyboardEvent('keydown', {
         key: 'Enter',
@@ -396,9 +410,15 @@ function trySend(btn, attemptsLeft = 15) {
       });
       inputEl.dispatchEvent(enterEvt);
     } catch (_) {}
+
+    // Give the chat framework a frame to process Enter; only click the Send
+    // button if the composer still holds text (avoids clicking a button slot
+    // that already flipped to Voice or Stop after Enter submitted).
+    setTimeout(() => trySend(attemptsLeft, true), 30);
+    return;
   }
 
-  const targetBtn = btn && btn.isConnected ? btn : getSendButton();
+  const targetBtn = getSendButton(inputEl);
   if (targetBtn && targetBtn.isConnected) {
     const isDisabled = targetBtn.disabled || targetBtn.getAttribute('aria-disabled') === 'true';
     if (!isDisabled) {
@@ -408,7 +428,7 @@ function trySend(btn, attemptsLeft = 15) {
   }
 
   if (attemptsLeft > 0) {
-    setTimeout(() => trySend(null, attemptsLeft - 1), 70);
+    setTimeout(() => trySend(attemptsLeft - 1, true), 70);
   }
 }
 
@@ -444,7 +464,7 @@ function getReplyButtonTitle(reply, config, index, hasLongPress = false) {
 function insertQuickReply(reply, config) {
   if (!reply || !config || !setInputText(reply.text)) return false;
   recordTimeSaved(reply.text, config);
-  if (config.autoSend) setTimeout(() => trySend(getSendButton()), 80);
+  if (config.autoSend) setTimeout(() => trySend(), 40);
   return true;
 }
 

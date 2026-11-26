@@ -1259,3 +1259,125 @@ test('suggestReplyLabel and saveQuickReplyToActiveProfile save a new reply to sy
     global.chrome = origChrome;
   }
 });
+
+test('autoSend skips clicking the send button slot once Enter clears the composer', async () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const origLoc = global.location;
+  const origInputEvent = global.InputEvent;
+  const origEvent = global.Event;
+  const origKeyEvent = global.KeyboardEvent;
+
+  let slotClicks = 0;
+  const actionSlotBtn = {
+    isConnected: true,
+    disabled: false,
+    getAttribute: () => null,
+    click: () => { slotClicks += 1; }
+  };
+  const editor = {
+    tagName: 'DIV',
+    isContentEditable: true,
+    isConnected: true,
+    id: 'prompt-textarea',
+    className: '',
+    offsetTop: 300,
+    textContent: '',
+    closest: () => ({}),
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: 600, height: 40, top: 300 }),
+    focus: () => {},
+    querySelector: () => null,
+    dispatchEvent: (event) => {
+      // Simulate ChatGPT/Perplexity/Grok submitting on Enter and clearing the input
+      // (after which the button in the action slot flips to Voice or Stop).
+      if (event.type === 'keydown' && event.key === 'Enter') {
+        editor.textContent = '';
+      }
+      return true;
+    }
+  };
+
+  global.location = { hostname: 'chatgpt.com' };
+  global.window = {
+    innerHeight: 900,
+    getComputedStyle: () => ({ display: 'block', visibility: 'visible', opacity: '1' }),
+    getSelection: () => ({ removeAllRanges: () => {}, addRange: () => {} })
+  };
+  global.document = {
+    querySelectorAll: (sel) => (sel === 'div#prompt-textarea' ? [editor] : []),
+    querySelector: (sel) => (sel === 'button[data-testid="send-button"]' ? actionSlotBtn : null),
+    createRange: () => ({ selectNodeContents: () => {}, collapse: () => {} }),
+    execCommand: (_cmd, _ui, text) => {
+      editor.textContent = text;
+      return true;
+    }
+  };
+  global.InputEvent = class InputEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+  global.Event = class Event { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+  global.KeyboardEvent = class KeyboardEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
+
+  try {
+    assert.equal(content.insertQuickReply({ text: 'Yes' }, { autoSend: true, timeSavedTracking: false }), true);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(editor.textContent, '');
+    assert.equal(slotClicks, 0, 'must not click the action slot after Enter already submitted');
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+    global.location = origLoc;
+    global.InputEvent = origInputEvent;
+    global.Event = origEvent;
+    global.KeyboardEvent = origKeyEvent;
+  }
+});
+
+test('getSendButton prefers a send button inside the composer over unrelated page submit buttons', () => {
+  const origDoc = global.document;
+  const origWin = global.window;
+  const origLoc = global.location;
+
+  const unrelatedPageBtn = {
+    isConnected: true,
+    disabled: false,
+    getAttribute: () => null
+  };
+  const composerSendBtn = {
+    isConnected: true,
+    disabled: false,
+    getAttribute: () => null
+  };
+  const composerForm = {
+    tagName: 'FORM',
+    parentElement: null,
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: 600, height: 80 }),
+    querySelector: (sel) => (sel === 'button[type="submit"]' ? composerSendBtn : null)
+  };
+  const editor = {
+    tagName: 'TEXTAREA',
+    isConnected: true,
+    closest: () => composerForm
+  };
+
+  global.location = { hostname: 'chat.deepseek.com' };
+  global.window = {
+    innerWidth: 1200,
+    innerHeight: 900,
+    getComputedStyle: () => ({ borderRadius: '12px' })
+  };
+  global.document = {
+    body: {},
+    documentElement: {},
+    querySelector: (sel) => (sel === 'button[type="submit"]' ? unrelatedPageBtn : null),
+    querySelectorAll: () => []
+  };
+
+  try {
+    assert.equal(content.getSendButton(editor), composerSendBtn);
+  } finally {
+    global.document = origDoc;
+    global.window = origWin;
+    global.location = origLoc;
+  }
+});
